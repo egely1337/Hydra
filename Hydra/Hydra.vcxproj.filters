@@ -18,10 +18,55 @@
     <ClCompile Include="Hydra.cpp">
       <Filter>Kaynak Dosyalar</Filter>
     </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_tables.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_widgets.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui-SFML.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_demo.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_draw.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hydra.hpp">
       <Filter>Kaynak Dosyalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imgui_internal.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imgui-SFML.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imgui-SFML_export.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imstb_rectpack.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imstb_textedit.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imstb_truetype.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imconfig.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imconfig-SFML.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imgui.h">
+      <Filter>Kaynak Dosyaları</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

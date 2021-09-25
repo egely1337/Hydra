@@ -1,6 +1,4 @@
 #pragma once
-#include <imgui.h>
-#include <imgui-SFML.h>
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
@@ -8,6 +6,9 @@
 #include <sstream>
 #include <thread>
 #define SFML_STATIC
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <imgui-SFML.h>
 
 
 typedef unsigned int uint_t;
@@ -25,7 +26,7 @@ public:
 	static bool Info(const char* text) {
 		std::stringstream buffer;
 		buffer << text;
-		std::cout << "INFO: " << buffer.str() << std::endl;
+		std::cout << "INFO: " << buffer.str() <<	 std::endl;
 		return true;
 	}
 };
@@ -115,11 +116,16 @@ public:
 			std::stringstream ss;
 			ss << "FPS: " << framePerSecond << " " << "CPU Time: " << lastCPUTime << std::endl;
 			printf(ss.str().c_str());
+			_fps = framePerSecond;
 			framePerSecond = 0;
 			refresh = high_resolution_clock::now();
 		}
 
 		return false;
+	}
+
+	int GetFps() {
+		return _fps;
 	}
 
 	bool SetFPS(long _framePerSecond) {
@@ -131,6 +137,7 @@ protected:
 	time_point<high_resolution_clock> refresh = high_resolution_clock::now();
 	sf::RenderWindow* m_Window;
 	int framePerSecond = 0;
+	int _fps;
 	long fps = 10;
 	float lastCPUTime = 0;
 };
@@ -143,6 +150,7 @@ public:
 	bool Application(){
 		Log::Info("Application has started.");
 		time.SetWindow(window);
+		ImGui::SFML::Init(*window);
 		objects.SetWindow(window);
 		Start();
 		while (window->isOpen()) {
@@ -150,14 +158,31 @@ public:
 				Update();
 				Event();
 				window->clear();
+				window->pushGLStates();
 				Render();
+				ImGuiRenderer();
+				window->popGLStates();
+				ImGui::SFML::Render();
 				window->display();
 			}
 		}
+		ImGui::SFML::Shutdown();
 		return true;
 	}
+
+	bool ImGuiRenderer() {
+		ImGui::SFML::Update(*window, deltaClock.restart());
+		ImGui::Begin("Stats",0,ImGuiTableColumnFlags_NoResize);
+		std::stringstream fps;
+		fps << "FPS: " << time.GetFps();
+		ImGui::Text(fps.str().c_str());
+		ImGui::End();
+		return true;
+	}
+
 	bool Event() {
 		if (window->pollEvent(event)) {
+			ImGui::SFML::ProcessEvent(event);
 			if (event.type == sf::Event::Closed) {
 				window->close();
 			}
@@ -165,11 +190,11 @@ public:
 		return true;
 	}
 
-	bool Render() {
+	bool Render() 
+	{
 		for (auto& b : objects.GetRenderObjects()) {
 			b->Render();
 		}
-		ImGui::SFML::Init(*window);
 		return true;
 	}
 
@@ -197,4 +222,5 @@ protected:
 	sf::Event event;
 	RenderObjects objects;
 	Time time;
+	sf::Clock deltaClock;
 };
