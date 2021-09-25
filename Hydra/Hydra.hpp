@@ -205,8 +205,8 @@ public:
 		SetupStyleImGui();
 		
 	
-
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+		ImGui::Text("Scene");
 		if (ImGui::CollapsingHeader("GameObjects")) {
 			for (int i = 0; i < objects.GetRenderObjects().size(); i++) {
 				if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName())) {
@@ -238,7 +238,7 @@ public:
 			std::string s = Log::GetLogger().logData[i];
 			ImGui::Text(s.c_str());
 		}
-		ImGui::SetWindowPos({ (float)window->getPosition().x + (ImGui::GetWindowSize().x - 1030) , (float)window->getSize().y - (ImGui::GetWindowSize().y + 60)});
+		ImGui::SetWindowPos({ (float)window->getPosition().x + (ImGui::GetWindowSize().x - 1025) , (float)window->getSize().y - (ImGui::GetWindowSize().y)});
 		ImGui::SetWindowSize({ 1326 , 164});
 		ImGui::End();
 
