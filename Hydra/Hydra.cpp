@@ -13,12 +13,15 @@ public:
 	} 
 
 	void Start() {
-		SetFPS(120);
-		mesh = ObjectManager()->Instantiate(new Mesh());
+		SetFPS(500);
+		mesh = ObjectManager()->Instantiate(new Mesh("Hyper"));
+		Mesh* mesh2 = ObjectManager()->Instantiate(new Mesh("adas"));
+		Mesh* mesh3 = ObjectManager()->Instantiate(new Mesh("Hyasdasdasper"));
+		mesh->SetPosition(Vector2((float)1920 / 2,(float)1080 / 2));
 	}
 };
 
 int main() {
 	Window* window = new App();
-	window->Init("Hydra", 800, 600);
+	window->Init("Hydra", 1920, 1080);
 }
