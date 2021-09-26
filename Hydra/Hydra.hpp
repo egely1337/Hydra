@@ -16,11 +16,25 @@
 typedef unsigned int uint_t;
 using namespace std::chrono;
 
+
+class Save {
+	//TODO
+};
+
 class Vector2 {
 public:
 	Vector2(float _x = 1, float _y = 1) { x = _x, y = _y; }
 	float x;
 	float y;
+};
+
+class Keyboard {
+public:
+	static Keyboard GetKeyboard(){
+		static Keyboard k;
+		return k;
+	}
+	//TODO
 };
 
 
@@ -62,6 +76,10 @@ public:
 	//TODO
 	virtual void Start(){};
 	virtual void Update(){};
+
+	Vector2* position;
+	Vector2* scale;
+	Vector2* textureRect;
 };
 
 
@@ -69,10 +87,13 @@ class Mesh {
 public:
 	Vector2 position;
 	Vector2 scale;
+	Vector2 textureRect;
 
 	Mesh(std::string gameObject,std::string textureLoc = "default_assets/square.png") {
 		LoadTexture(textureLoc);
 		name = gameObject;
+		textureRect.x = 32;
+		textureRect.y = 32;
 	}
 
 	void Initialize() {
@@ -82,6 +103,13 @@ public:
 	void SetScale(float _x, float _y) {
 		scale.x = _x;
 		scale.y = _y;
+	}
+	void AddComponent(ECS* component) {
+		components.push_back(component);
+		component->Start();
+		component->position = &position;
+		component->scale = &scale;
+		component->textureRect = &textureRect;
 	}
 
 	bool LoadTexture(std::string _dir) {
@@ -99,8 +127,13 @@ public:
 
 
 	bool Update() {
+
+		for (auto* b : components) {
+			b->Update();
+		}
 		shape->setPosition(sf::Vector2f(position.x, position.y));
 		shape->setScale(sf::Vector2f(scale.x, scale.y));
+		shape->setTextureRect(sf::IntRect(32, 32, textureRect.x, textureRect.y));
 		return true;
 	}
 
@@ -128,8 +161,10 @@ protected:
 	sf::Sprite* shape;
 	std::string name;
 	sf::RenderWindow* window;
-	std::vector<ECS> components;
+	std::vector<ECS*> components;
 	sf::Texture o_Texture;
+
+	
 
 
 };
@@ -216,6 +251,7 @@ public:
 		while (window->isOpen()) {
 			while (time.Update()) {
 				Update();
+				ApplicationUpdate();
 				Event();
 				window->clear();
 				window->pushGLStates();
@@ -233,9 +269,9 @@ public:
 	}
 
 	bool ImGuiRenderer() {
+
 		ImGui::SFML::Update(*window, deltaClock.restart());
 		SetupStyleImGui();
-
 		
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
@@ -250,8 +286,16 @@ public:
 
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Settings")) {
+				if (ImGui::MenuItem("Engine Settings")) {
+					settings = true;
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
 		}
+
 	
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Scene");
@@ -278,8 +322,20 @@ public:
 			if (ImGui::Button("Create")) {
 				std::stringstream ss;
 				ss << b;
-				objects.Instantiate(new Mesh(ss.str()));
-				isCreateOpen = false;
+				if (ss.str() != "") {
+					for (auto& a : objects.GetRenderObjects()) {
+						if (a->GetObjectName() == ss.str()) {
+							ss = std::stringstream();
+							ss << b <<" (ID: " << rand() << ")";
+							break;
+						}
+					}
+					objects.Instantiate(new Mesh(ss.str()));
+					isCreateOpen = false;
+				}
+				else {
+					Log::GetLogger().Error("You can't instantiate this object cuz object name is empty.");
+				}
 			}
 			if (ImGui::Button("Cancel")) {
 				isCreateOpen = false;
@@ -301,11 +357,18 @@ public:
 			float* y = &objects.GetRenderObjects()[clickedData]->position.y;
 			float* s_X = &objects.GetRenderObjects()[clickedData]->scale.x;
 			float* s_Y = &objects.GetRenderObjects()[clickedData]->scale.y;
+			float* t_X = &objects.GetRenderObjects()[clickedData]->textureRect.x;
+			float* t_Y = &objects.GetRenderObjects()[clickedData]->textureRect.y;
 			ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName().c_str());
+			ImGui::Text("Position");
 			ImGui::SliderFloat("Position X", x ,0.f, window->getSize().x);
 			ImGui::SliderFloat("Position Y", y ,0.f, window->getSize().y);
+			ImGui::Text("Scale");
 			ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
 			ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
+			ImGui::Text("Texture");
+			ImGui::SliderFloat("Texture X", t_X, 0.f, 1920);
+			ImGui::SliderFloat("Texture Y", t_Y, 0.f, 1080);
 			ImGui::Button("Add Component");
 			textureFileBrowser.SetTypeFilters({ ".png",".jpg" });
 			textureFileBrowser.SetTitle("Select a Scene");
@@ -347,6 +410,10 @@ public:
 			}
 		}
 		return true;
+	}
+
+	void ApplicationUpdate() {
+
 	}
 
 	bool Render() 
@@ -464,7 +531,11 @@ protected:
 	RenderObjects objects;
 	Time time;
 	sf::Clock deltaClock;
-	int clickedData = 0;
+
+
+	int clickedData = 0;	
+
+	bool settings;
 	bool playable = false;
 	bool isCreateOpen = false;
 

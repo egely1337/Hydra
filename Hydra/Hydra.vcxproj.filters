@@ -71,5 +71,8 @@
     <ClInclude Include="..\vendor\imgui\imfilebrowser.h">
       <Filter>Kaynak Dosyaları</Filter>
     </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Kaynak Dosyalar</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
