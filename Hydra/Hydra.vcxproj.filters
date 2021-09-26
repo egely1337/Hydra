@@ -68,5 +68,8 @@
     <ClInclude Include="..\vendor\imgui\imgui.h">
       <Filter>Kaynak Dosyaları</Filter>
     </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imfilebrowser.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

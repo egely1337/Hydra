@@ -9,6 +9,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui-SFML.h>
+#include <imfilebrowser.h>
+#include <Windows.h>
 
 
 typedef unsigned int uint_t;
@@ -16,7 +18,7 @@ using namespace std::chrono;
 
 class Vector2 {
 public:
-	Vector2(float _x = 0, float _y = 0) { x = _x, y = _y; }
+	Vector2(float _x = 1, float _y = 1) { x = _x, y = _y; }
 	float x;
 	float y;
 };
@@ -57,6 +59,7 @@ public:
 
 class ECS {
 public:
+	//TODO
 	virtual void Start(){};
 	virtual void Update(){};
 };
@@ -65,17 +68,39 @@ public:
 class Mesh {
 public:
 	Vector2 position;
+	Vector2 scale;
 
-	Mesh(const char* gameObject) {
+	Mesh(std::string gameObject,std::string textureLoc = "default_assets/square.png") {
+		LoadTexture(textureLoc);
 		name = gameObject;
 	}
 
 	void Initialize() {
-		shape = new sf::CircleShape(50);
+		shape = new sf::Sprite(o_Texture);
 	}
+
+	void SetScale(float _x, float _y) {
+		scale.x = _x;
+		scale.y = _y;
+	}
+
+	bool LoadTexture(std::string _dir) {
+		if (!o_Texture.loadFromFile(_dir)) {
+			Log::GetLogger().Error("Can't get a texture.");
+			Log::GetLogger().Info("Trying to get default texture.");
+			if (o_Texture.loadFromFile("default_assets/square.png")) {
+				Log::GetLogger().Info("Succesfully get default texture.");
+			}
+			return false;
+		}
+		Log::GetLogger().Info("Succesfully get a texture.");
+		return true;
+	}
+
 
 	bool Update() {
 		shape->setPosition(sf::Vector2f(position.x, position.y));
+		shape->setScale(sf::Vector2f(scale.x, scale.y));
 		return true;
 	}
 
@@ -95,15 +120,16 @@ public:
 		return true;
 	}
 
-	const char* GetObjectName() {
+	std::string GetObjectName() {
 		return name;
 	}
 
 protected:
-	sf::CircleShape* shape;
+	sf::Sprite* shape;
+	std::string name;
 	sf::RenderWindow* window;
 	std::vector<ECS> components;
-	const char* name;
+	sf::Texture o_Texture;
 
 
 };
@@ -161,6 +187,10 @@ public:
 		fps = _framePerSecond;
 		return true;
 	}
+
+	float getCpuTime() {
+		return lastCPUTime;
+	}
 protected:
 	time_point<high_resolution_clock> now = high_resolution_clock::now();
 	time_point<high_resolution_clock> refresh = high_resolution_clock::now();
@@ -190,9 +220,11 @@ public:
 				window->clear();
 				window->pushGLStates();
 				Render();
-				ImGuiRenderer();
+				if(playable)
+					ImGuiRenderer();
 				window->popGLStates();
-				ImGui::SFML::Render();
+				if(playable)
+					ImGui::SFML::Render();
 				window->display();
 			}
 		}
@@ -203,33 +235,91 @@ public:
 	bool ImGuiRenderer() {
 		ImGui::SFML::Update(*window, deltaClock.restart());
 		SetupStyleImGui();
+
 		
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("New")) {
+				}
+				if (ImGui::MenuItem("Load")) {
+
+				}
+				if (ImGui::MenuItem("Play")) {
+					Play(false);
+				}
+
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
 	
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Scene");
 		if (ImGui::CollapsingHeader("GameObjects")) {
 			for (int i = 0; i < objects.GetRenderObjects().size(); i++) {
-				if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName())) {
+				if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName().c_str())) {
 					clickedData = i;
 				}
 			}
 		}
-		ImGui::SetWindowPos({ 0, 0 });
-		ImGui::SetWindowPos({ 0, 0 });
+		if (ImGui::Button("Add Object")) {
+			isCreateOpen = true;
+		}
+		ImGui::SetWindowPos({ 0, 20 });
+		ImGui::SetWindowPos({ 0, 20 });
 		ImGui::SetWindowSize({ 300,(float)window->getSize().y});
 		ImGui::End();
 
 
+		if (isCreateOpen) {
+			ImGui::Begin("Create Object",(bool*)0,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+			static char b[128];
+			ImGui::InputText("GameObject name",b,IM_ARRAYSIZE(b));
+			if (ImGui::Button("Create")) {
+				std::stringstream ss;
+				ss << b;
+				objects.Instantiate(new Mesh(ss.str()));
+				isCreateOpen = false;
+			}
+			if (ImGui::Button("Cancel")) {
+				isCreateOpen = false;
+			}
+			ImGui::End();
+		}
+
+		ImGui::Begin("engine_data", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+		std::stringstream ss;
+		ss << "FPS: " << GetFPS() << "\n" << "CPU Time : " << getCpuTime() << "ms";
+		ImGui::SetWindowSize({ 200,200 });
+		ImGui::SetWindowPos({ 300,20 });
+		ImGui::Text(ss.str().c_str());
+		ImGui::End();
 
 		ImGui::Begin("Inspector", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		if (ImGui::CollapsingHeader("Object Data")) {
 			float* x = &objects.GetRenderObjects()[clickedData]->position.x;
 			float* y = &objects.GetRenderObjects()[clickedData]->position.y;
-			ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName());
-			ImGui::SliderFloat("X", x ,0.f, window->getSize().x);
-			ImGui::SliderFloat("Y", y ,0.f, window->getSize().y);
+			float* s_X = &objects.GetRenderObjects()[clickedData]->scale.x;
+			float* s_Y = &objects.GetRenderObjects()[clickedData]->scale.y;
+			ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName().c_str());
+			ImGui::SliderFloat("Position X", x ,0.f, window->getSize().x);
+			ImGui::SliderFloat("Position Y", y ,0.f, window->getSize().y);
+			ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
+			ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
+			ImGui::Button("Add Component");
+			textureFileBrowser.SetTypeFilters({ ".png",".jpg" });
+			textureFileBrowser.SetTitle("Select a Scene");
+			textureFileBrowser.Display();
+
+			if (textureFileBrowser.HasSelected()) {
+				objects.GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
+				textureFileBrowser.ClearSelected();
+			}
+			if (ImGui::Button("Change Texture")) {
+				textureFileBrowser.Open();
+			}
 		}
-		ImGui::SetWindowPos({ (float)window->getSize().x -300, 0 });
+		ImGui::SetWindowPos({ (float)window->getSize().x -300, 20 });
 		ImGui::SetWindowSize({ 300,(float)window->getSize().y });
 		ImGui::End();
 
@@ -249,7 +339,11 @@ public:
 		if (window->pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
 			if (event.type == sf::Event::Closed) {
-				window->close();
+				const int b = MessageBox(NULL, L"Do you want quit from Hydra?", L"Are you sure?", MB_ICONQUESTION | MB_YESNO);
+				switch (b) {
+				case IDYES:
+					window->close();
+				}
 			}
 		}
 		return true;
@@ -285,6 +379,15 @@ public:
 
 	int GetFPS() {
 		return time.GetFps();
+	}
+
+	float getCpuTime() {
+		return time.getCpuTime();
+	}
+
+	bool Play(bool _p) {
+		playable = _p;
+		return true;
 	}
 
 	void SetupStyleImGui() {
@@ -362,4 +465,8 @@ protected:
 	Time time;
 	sf::Clock deltaClock;
 	int clickedData = 0;
+	bool playable = false;
+	bool isCreateOpen = false;
+
+	ImGui::FileBrowser textureFileBrowser;
 };
