@@ -11,7 +11,7 @@
 #include <imgui-SFML.h>
 #include <imfilebrowser.h>
 #include <Windows.h>
-
+#include <stdexcept>
 
 typedef unsigned int uint_t;
 using namespace std::chrono;
@@ -112,6 +112,10 @@ public:
 		component->textureRect = &textureRect;
 	}
 
+	sf::Sprite* getSprite() {
+		return shape;
+	}
+
 	bool LoadTexture(std::string _dir) {
 		if (!o_Texture.loadFromFile(_dir)) {
 			Log::GetLogger().Error("Can't get a texture.");
@@ -184,6 +188,14 @@ public:
 
 	std::vector<Mesh*> GetRenderObjects(){
 		return e_RenderObjects;
+	}
+
+	void Clear() {
+		e_RenderObjects.clear();
+	}
+
+	void ClearById(int _id) {
+		e_RenderObjects.erase(e_RenderObjects.begin() + _id);
 	}
 protected:
 	sf::RenderWindow* e_RenderWindow;
@@ -300,9 +312,11 @@ public:
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Scene");
 		if (ImGui::CollapsingHeader("GameObjects")) {
-			for (int i = 0; i < objects.GetRenderObjects().size(); i++) {
-				if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName().c_str())) {
-					clickedData = i;
+			if (!objects.GetRenderObjects().empty()) {
+				for (int i = 0; i < objects.GetRenderObjects().size(); i++) {
+					if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName().c_str())) {
+						clickedData = i;
+					}
 				}
 			}
 		}
@@ -352,38 +366,50 @@ public:
 		ImGui::End();
 
 		ImGui::Begin("Inspector", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-		if (ImGui::CollapsingHeader("Object Data")) {
-			float* x = &objects.GetRenderObjects()[clickedData]->position.x;
-			float* y = &objects.GetRenderObjects()[clickedData]->position.y;
-			float* s_X = &objects.GetRenderObjects()[clickedData]->scale.x;
-			float* s_Y = &objects.GetRenderObjects()[clickedData]->scale.y;
-			float* t_X = &objects.GetRenderObjects()[clickedData]->textureRect.x;
-			float* t_Y = &objects.GetRenderObjects()[clickedData]->textureRect.y;
-			ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName().c_str());
-			ImGui::Text("Position");
-			ImGui::SliderFloat("Position X", x ,0.f, window->getSize().x);
-			ImGui::SliderFloat("Position Y", y ,0.f, window->getSize().y);
-			ImGui::Text("Scale");
-			ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
-			ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
-			ImGui::Text("Texture");
-			ImGui::SliderFloat("Texture X", t_X, 0.f, 1920);
-			ImGui::SliderFloat("Texture Y", t_Y, 0.f, 1080);
-			ImGui::Button("Add Component");
-			textureFileBrowser.SetTypeFilters({ ".png",".jpg" });
-			textureFileBrowser.SetTitle("Select a Scene");
-			textureFileBrowser.Display();
+		if (objects.GetRenderObjects().empty() == false) {
+			if (ImGui::CollapsingHeader("Object Data")) {
+				float* x = &objects.GetRenderObjects()[clickedData]->position.x;
+				float* y = &objects.GetRenderObjects()[clickedData]->position.y;
+				float* s_X = &objects.GetRenderObjects()[clickedData]->scale.x;
+				float* s_Y = &objects.GetRenderObjects()[clickedData]->scale.y;
+				float* t_X = &objects.GetRenderObjects()[clickedData]->textureRect.x;
+				float* t_Y = &objects.GetRenderObjects()[clickedData]->textureRect.y;
+				ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName().c_str());
+				ImGui::Text("Position");
+				ImGui::SliderFloat("Position X", x, 0.f, window->getSize().x);
+				ImGui::SliderFloat("Position Y", y, 0.f, window->getSize().y);
+				ImGui::Text("Scale");
+				ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
+				ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
+				ImGui::Text("Texture");
+				ImGui::SliderFloat("Texture X", t_X, 0.f, 1920);
+				ImGui::SliderFloat("Texture Y", t_Y, 0.f, 1080);
+				ImGui::Button("Add Component");
+				if (ImGui::Button("Delete Object")) {
+					try {
+						objects.ClearById(clickedData);
+						clickedData = 0;
+						Log::GetLogger().Info("Successfully removed object.");
+					}
+					catch (std::out_of_range& b) {
+						std::cerr << "Out of range: " << b.what() << "\n";
+					}
+				}
+				textureFileBrowser.SetTypeFilters({ ".png",".jpg" });
+				textureFileBrowser.SetTitle("Select a Texture");
+				textureFileBrowser.Display();
 
-			if (textureFileBrowser.HasSelected()) {
-				objects.GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
-				textureFileBrowser.ClearSelected();
+				if (textureFileBrowser.HasSelected()) {
+					objects.GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
+					textureFileBrowser.ClearSelected();
+				}
+				if (ImGui::Button("Change Texture")) {
+					textureFileBrowser.Open();
+				}
 			}
-			if (ImGui::Button("Change Texture")) {
-				textureFileBrowser.Open();
-			}
+			ImGui::SetWindowPos({ (float)window->getSize().x - 300, 20 });
+			ImGui::SetWindowSize({ 300,(float)window->getSize().y });
 		}
-		ImGui::SetWindowPos({ (float)window->getSize().x -300, 20 });
-		ImGui::SetWindowSize({ 300,(float)window->getSize().y });
 		ImGui::End();
 
 		ImGui::Begin("Console",(bool*)false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
