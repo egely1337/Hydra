@@ -1,4 +1,5 @@
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
@@ -12,6 +13,7 @@
 #include <imfilebrowser.h>
 #include <Windows.h>
 #include <stdexcept>
+#include <fstream>
 
 typedef unsigned int uint_t;
 using namespace std::chrono;
@@ -49,21 +51,21 @@ public:
 
 	bool Info(std::string text) {
 		std::stringstream buffer;
-		buffer << "INFO: " << text;
+		buffer << "INFO " << logData.size() << ": " << text;
 		logData.push_back(buffer.str());
 		std::cout << buffer.str() << std::endl;
 		return true;
 	}
 	bool Warning(std::string text) {
 		std::stringstream buffer;
-		buffer << "WARNING: " << text;
+		buffer << "WARNING " << logData.size() << ": " << text;
 		logData.push_back(buffer.str());
 		std::cout << buffer.str() << std::endl;
 		return true;
 	}
 	bool Error(std::string text) {
 		std::stringstream buffer;
-		buffer << "ERROR: " << text;
+		buffer << "ERROR " << logData.size() << ": " << text;
 		logData.push_back(buffer.str());
 		std::cout << buffer.str() << std::endl;
 		return true;
@@ -431,6 +433,20 @@ public:
 				const int b = MessageBox(NULL, L"Do you want quit from Hydra?", L"Are you sure?", MB_ICONQUESTION | MB_YESNO);
 				switch (b) {
 				case IDYES:
+					std::ofstream stream;
+					std::stringstream fileName;
+					std::time_t t = std::time(0);
+					std::tm* now = std::localtime(&t);
+					fileName << "./logs/" << now->tm_mday << "-" << now->tm_mon << "-" << now->tm_year << ".log";
+					stream.open(fileName.str().c_str(), std::ios::out);
+
+					for (auto b : Log::GetLogger().logData) {
+						stream << b << "\n";
+						std::cout << b;
+					}
+					Log::GetLogger().Info("Processing logs.");
+					stream.flush();
+					stream.close();
 					window->close();
 				}
 			}
