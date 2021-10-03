@@ -19,9 +19,6 @@ typedef unsigned int uint_t;
 using namespace std::chrono;
 
 
-class Save {
-	//TODO
-};
 
 class Vector2 {
 public:
@@ -250,6 +247,79 @@ protected:
 	float lastCPUTime = 0;
 };
 
+
+class Scene {
+public:
+	bool SaveScene() { 
+		return true;
+	};
+
+
+	bool LoadScene(std::string path) {
+		_set_abort_behavior(0, _WRITE_ABORT_MSG);
+		s_RenderObjects.Clear();
+		_saveFile.clear();
+		LoadFile(path);
+
+		for (size_t i = 0; i < _saveFile.size(); i++) {
+
+			if (_saveFile[i] == "[GAMEOBJECT]") {
+				struct Entity {
+					std::string name;
+					float posx;
+					float posy;
+					float scalex;
+					float scaley;
+					std::string textureLocation;
+				};
+				Entity ent;
+				try{
+					ent.name = _saveFile[i + 1];
+					ent.posx = std::stof(_saveFile[i + 2]);
+					ent.posy = std::stof(_saveFile[i + 3]);
+					ent.scalex = std::stof(_saveFile[i + 4]);
+					ent.scaley = std::stof(_saveFile[i + 5]);
+					ent.textureLocation = _saveFile[i + 6];
+				}
+				catch (const std::invalid_argument& b) {
+					std::stringstream ss;
+					ss << "Cannot load scene (" << b.what() << ") " << "[" << __FILE__ << ":" << __LINE__ << "]";
+					Log::GetLogger().Error(ss.str());
+					return false;
+				}
+				Mesh* m = s_RenderObjects.Instantiate(new Mesh(ent.name));
+				m->position.x = ent.posx;
+				m->position.y = ent.posy;
+				m->scale.x = ent.scalex;
+				m->scale.y = ent.scaley;
+				m->LoadTexture(ent.textureLocation);
+
+
+			}
+		}
+		return true;
+	};
+
+
+	RenderObjects* GetRenderObjects() {
+		return &s_RenderObjects;
+	}
+protected:
+	bool LoadFile(std::string path) {
+		std::ifstream ss;
+		ss.open(path);
+		std::string data;
+		if (ss.is_open()) {
+			while (std::getline(ss, data)) {
+				_saveFile.push_back(data);
+			}
+		}
+		return true;
+	}
+	RenderObjects s_RenderObjects;
+	std::vector<std::string> _saveFile;
+};
+
 class Window {
 public:
 	Window() {};
@@ -259,7 +329,7 @@ public:
 		Log::GetLogger().Info("Engine trying to get ready.");
 		time.SetWindow(window);
 		ImGui::SFML::Init(*window);
-		objects.SetWindow(window);
+		scene.GetRenderObjects()->SetWindow(window);
 		Log::GetLogger().Info("Ready!");
 		Start();
 		while (window->isOpen()) {
@@ -291,7 +361,19 @@ public:
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New")) {
 				}
+
+				sceneBrowser.Display();
+				if (sceneBrowser.HasSelected()) {
+					scene.LoadScene(sceneBrowser.GetSelected().generic_string());
+					sceneBrowser.ClearSelected();
+				}
 				if (ImGui::MenuItem("Load")) {
+					sceneBrowser.Open();
+			
+					sceneBrowser.SetTypeFilters({".hscene"});
+					sceneBrowser.SetTitle("Select a Texture");
+				
+
 
 				}
 				if (ImGui::MenuItem("Play")) {
@@ -314,9 +396,9 @@ public:
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Scene");
 		if (ImGui::CollapsingHeader("GameObjects")) {
-			if (!objects.GetRenderObjects().empty()) {
-				for (int i = 0; i < objects.GetRenderObjects().size(); i++) {
-					if (ImGui::Selectable(objects.GetRenderObjects()[i]->GetObjectName().c_str())) {
+			if (!scene.GetRenderObjects()->GetRenderObjects().empty()) {
+				for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects().size(); i++) {
+					if (ImGui::Selectable(scene.GetRenderObjects()->GetRenderObjects()[i]->GetObjectName().c_str())) {
 						clickedData = i;
 					}
 				}
@@ -339,14 +421,14 @@ public:
 				std::stringstream ss;
 				ss << b;
 				if (ss.str() != "") {
-					for (auto& a : objects.GetRenderObjects()) {
+					for (auto& a : scene.GetRenderObjects()->GetRenderObjects()) {
 						if (a->GetObjectName() == ss.str()) {
 							ss = std::stringstream();
 							ss << b <<" (ID: " << rand() << ")";
 							break;
 						}
 					}
-					objects.Instantiate(new Mesh(ss.str()));
+					scene.GetRenderObjects()->Instantiate(new Mesh(ss.str()));
 					isCreateOpen = false;
 				}
 				else {
@@ -368,15 +450,15 @@ public:
 		ImGui::End();
 
 		ImGui::Begin("Inspector", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-		if (objects.GetRenderObjects().empty() == false) {
+		if (scene.GetRenderObjects()->GetRenderObjects().empty() == false) {
 			if (ImGui::CollapsingHeader("Object Data")) {
-				float* x = &objects.GetRenderObjects()[clickedData]->position.x;
-				float* y = &objects.GetRenderObjects()[clickedData]->position.y;
-				float* s_X = &objects.GetRenderObjects()[clickedData]->scale.x;
-				float* s_Y = &objects.GetRenderObjects()[clickedData]->scale.y;
-				float* t_X = &objects.GetRenderObjects()[clickedData]->textureRect.x;
-				float* t_Y = &objects.GetRenderObjects()[clickedData]->textureRect.y;
-				ImGui::Text(objects.GetRenderObjects()[clickedData]->GetObjectName().c_str());
+				float* x = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->position.x;
+				float* y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->position.y;
+				float* s_X = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->scale.x;
+				float* s_Y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->scale.y;
+				float* t_X = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.x;
+				float* t_Y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.y;
+				ImGui::Text(scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetObjectName().c_str());
 				ImGui::Text("Position");
 				ImGui::SliderFloat("Position X", x, 0.f, window->getSize().x);
 				ImGui::SliderFloat("Position Y", y, 0.f, window->getSize().y);
@@ -389,7 +471,7 @@ public:
 				ImGui::Button("Add Component");
 				if (ImGui::Button("Delete Object")) {
 					try {
-						objects.ClearById(clickedData);
+						scene.GetRenderObjects()->ClearById(clickedData);
 						clickedData = 0;
 						Log::GetLogger().Info("Successfully removed object.");
 					}
@@ -402,7 +484,7 @@ public:
 				textureFileBrowser.Display();
 
 				if (textureFileBrowser.HasSelected()) {
-					objects.GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
+					scene.GetRenderObjects()->GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
 					textureFileBrowser.ClearSelected();
 				}
 				if (ImGui::Button("Change Texture")) {
@@ -460,7 +542,7 @@ public:
 
 	bool Render() 
 	{
-		for (auto& b : objects.GetRenderObjects()) {
+		for (auto& b : scene.GetRenderObjects()->GetRenderObjects()) {
 			b->Render();
 		}
 		return true;
@@ -478,9 +560,6 @@ public:
 		return true;
 	}
 
-	RenderObjects* ObjectManager() {
-		return &objects;
-	}
 
 	void SetFPS(double fps) {
 		time.SetFPS(fps);
@@ -570,7 +649,7 @@ public:
 protected:
 	sf::RenderWindow* window = NULL;
 	sf::Event event;
-	RenderObjects objects;
+	Scene scene;
 	Time time;
 	sf::Clock deltaClock;
 
@@ -582,4 +661,5 @@ protected:
 	bool isCreateOpen = false;
 
 	ImGui::FileBrowser textureFileBrowser;
+	ImGui::FileBrowser sceneBrowser;
 };

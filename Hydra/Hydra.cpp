@@ -13,9 +13,9 @@ public:
 	void Start() {
 		SetFPS(90);
 		Play(true);
-		//mesh = ObjectManager()->Instantiate(new Mesh("Hyper","asdas"));
-		//mesh->SetPosition(Vector2((float)1920 / 2,(float)1080 / 2));
-		//mesh->AddComponent(new Player());
+		mesh = scene.GetRenderObjects()->Instantiate(new Mesh("Hyper","asdas"));
+		mesh->SetPosition(Vector2((float)1920 / 2,(float)1080 / 2));
+		mesh->AddComponent(new Player());
 	}
 };
 
