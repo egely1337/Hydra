@@ -99,6 +99,10 @@ public:
 		shape = new sf::Sprite(o_Texture);
 	}
 
+	std::string GetTextureDirectory() {
+		return textureDirectory;
+	}
+
 	void SetScale(float _x, float _y) {
 		scale.x = _x;
 		scale.y = _y;
@@ -121,10 +125,12 @@ public:
 			Log::GetLogger().Info("Trying to get default texture.");
 			if (o_Texture.loadFromFile("default_assets/square.png")) {
 				Log::GetLogger().Info("Succesfully get default texture.");
+				textureDirectory = "default_assets/square.png";
 			}
 			return false;
 		}
 		Log::GetLogger().Info("Succesfully get a texture.");
+		textureDirectory = _dir;
 		return true;
 	}
 
@@ -166,6 +172,7 @@ protected:
 	sf::RenderWindow* window;
 	std::vector<ECS*> components;
 	sf::Texture o_Texture;
+	std::string textureDirectory;
 
 	
 
@@ -255,6 +262,15 @@ public:
 	};
 
 
+	bool SaveScene(std::string path) {
+		_set_abort_behavior(0, _WRITE_ABORT_MSG);
+		SaveFile(path);
+		std::stringstream ss;
+		ss << "Successfully saved file in [" << path << "]";
+		Log::GetLogger().Info(ss.str());
+		return true;
+	}
+
 	bool LoadScene(std::string path) {
 		_set_abort_behavior(0, _WRITE_ABORT_MSG);
 		s_RenderObjects.Clear();
@@ -266,10 +282,10 @@ public:
 			if (_saveFile[i] == "[GAMEOBJECT]") {
 				struct Entity {
 					std::string name;
-					float posx;
-					float posy;
-					float scalex;
-					float scaley;
+					float posx = 0;
+					float posy = 0;
+					float scalex = 0;
+					float scaley = 0;
 					std::string textureLocation;
 				};
 				Entity ent;
@@ -316,13 +332,28 @@ protected:
 		}
 		return true;
 	}
+
+	bool SaveFile(std::string path) {
+		std::ofstream ss;
+		ss.open(path);
+		for(auto& b: s_RenderObjects.GetRenderObjects()){
+			ss << "[GAMEOBJECT]\n";
+			ss << b->GetObjectName() << std::endl;
+			ss << b->position.x << std::endl;
+			ss << b->position.y << std::endl;
+			ss << b->scale.x << std::endl;
+			ss << b->scale.y << std::endl;
+			ss << b->GetTextureDirectory() << std::endl;
+		}
+		return true;
+	}
 	RenderObjects s_RenderObjects;
 	std::vector<std::string> _saveFile;
 };
 
 class Window {
 public:
-	Window() {};
+	Window() {}
 	~Window() {}
 	bool Init(const char* title, uint_t width, uint_t height) { window = new sf::RenderWindow(sf::VideoMode(width, height), title); Application(); return true; }
 	bool Application(){
@@ -356,25 +387,31 @@ public:
 
 		ImGui::SFML::Update(*window, deltaClock.restart());
 		SetupStyleImGui();
-		
+
+		if (sceneBrowser.HasSelected()) {
+			scene.LoadScene(sceneBrowser.GetSelected().generic_string());
+			sceneBrowser.ClearSelected();
+		}
+
+		if (saveSceneBrowser.HasSelected()) {
+			scene.SaveScene(saveSceneBrowser.GetSelected().generic_string());
+			saveSceneBrowser.ClearSelected();
+		}
+		sceneBrowser.SetTypeFilters({ ".hscene" });
+		sceneBrowser.SetTitle("Select a scene.");
+		sceneBrowser.Display();
+		saveSceneBrowser.SetTypeFilters({ ".hscene" });
+		saveSceneBrowser.SetTitle("Select a scene");
+		saveSceneBrowser.Display();
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New")) {
 				}
-
-				sceneBrowser.Display();
-				if (sceneBrowser.HasSelected()) {
-					scene.LoadScene(sceneBrowser.GetSelected().generic_string());
-					sceneBrowser.ClearSelected();
+				if (ImGui::MenuItem("Save")) {
+					saveSceneBrowser.Open();
 				}
 				if (ImGui::MenuItem("Load")) {
-					sceneBrowser.Open();
-			
-					sceneBrowser.SetTypeFilters({".hscene"});
-					sceneBrowser.SetTitle("Select a Texture");
-				
-
-
+					sceneBrowser.Open();			
 				}
 				if (ImGui::MenuItem("Play")) {
 					Play(false);
@@ -527,9 +564,9 @@ public:
 						std::cout << b;
 					}
 					Log::GetLogger().Info("Processing logs.");
-					stream.flush();
 					stream.close();
 					window->close();
+					exit(0);
 				}
 			}
 		}
@@ -662,4 +699,5 @@ protected:
 
 	ImGui::FileBrowser textureFileBrowser;
 	ImGui::FileBrowser sceneBrowser;
+	ImGui::FileBrowser saveSceneBrowser;
 };

@@ -8,6 +8,9 @@ public:
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
 			position->x += 1;
 		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+			position->x -= 1;
+		}
 	}
 
 	void Start() {
