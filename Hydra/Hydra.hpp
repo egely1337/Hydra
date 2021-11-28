@@ -2,10 +2,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <future>
 #include <vector>
 #include <chrono>
 #include <sstream>
-#include <thread>
 #define SFML_STATIC
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -14,7 +14,6 @@
 #include <Windows.h>
 #include <stdexcept>
 #include <fstream>
-
 typedef unsigned int uint_t;
 using namespace std::chrono;
 
@@ -44,6 +43,11 @@ public:
 	static Log& GetLogger() {
 		static Log l; 
 		return l;
+	}
+
+	bool Clear() {
+		logData.clear();
+		return true;
 	}
 
 	bool Info(std::string text) {
@@ -271,6 +275,11 @@ public:
 		return true;
 	}
 
+	bool ResetScene() {
+		s_RenderObjects.Clear();
+		return true;
+	}
+
 	bool LoadScene(std::string path) {
 		_set_abort_behavior(0, _WRITE_ABORT_MSG);
 		s_RenderObjects.Clear();
@@ -362,26 +371,28 @@ public:
 		ImGui::SFML::Init(*window);
 		scene.GetRenderObjects()->SetWindow(window);
 		Log::GetLogger().Info("Ready!");
-		Start();
+		SetFPS(60);
+		std:async(std::launch::async, &Window::Start, this);
 		while (window->isOpen()) {
 			while (time.Update()) {
 				Update();
 				ApplicationUpdate();
-				Event();
 				window->clear();
 				window->pushGLStates();
 				Render();
-				if(playable)
+				if (playable)
 					ImGuiRenderer();
 				window->popGLStates();
-				if(playable)
+				if (playable)
 					ImGui::SFML::Render();
 				window->display();
+				Event();
 			}
 		}
 		ImGui::SFML::Shutdown();
 		return true;
 	}
+
 
 	bool ImGuiRenderer() {
 
@@ -406,6 +417,7 @@ public:
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New")) {
+					scene.ResetScene();
 				}
 				if (ImGui::MenuItem("Save")) {
 					saveSceneBrowser.Open();
@@ -423,6 +435,13 @@ public:
 			if (ImGui::BeginMenu("Settings")) {
 				if (ImGui::MenuItem("Engine Settings")) {
 					settings = true;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Toolbar")) {
+				if (ImGui::MenuItem("Clear Console")) {
+					Log::GetLogger().Clear();
+					Log::GetLogger().Info("Logs are cleared.");
 				}
 				ImGui::EndMenu();
 			}
@@ -469,7 +488,7 @@ public:
 					isCreateOpen = false;
 				}
 				else {
-					Log::GetLogger().Error("You can't instantiate this object cuz object name is empty.");
+					Log::GetLogger().Error("You can't instantiate this object cause object name is empty.");
 				}
 			}
 			if (ImGui::Button("Cancel")) {
@@ -532,18 +551,18 @@ public:
 			ImGui::SetWindowSize({ 300,(float)window->getSize().y });
 		}
 		ImGui::End();
-
-		ImGui::Begin("Console",(bool*)false,ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+		ImGui::Begin("Console", (bool*)false, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		for (size_t i = 0; i < Log::GetLogger().logData.size(); i++) {
 			std::string s = Log::GetLogger().logData[i];
 			ImGui::Text(s.c_str());
 		}
-		ImGui::SetWindowPos({ (float)window->getPosition().x + (ImGui::GetWindowSize().x - 1025) , (float)window->getSize().y - (ImGui::GetWindowSize().y)});
-		ImGui::SetWindowSize({ 1326 , 164});
+		ImGui::SetWindowPos({ (float)window->getPosition().x + (ImGui::GetWindowSize().x - 1025) , (float)window->getSize().y - (ImGui::GetWindowSize().y) });
+		ImGui::SetWindowSize({ 1326 , 164 });
 		ImGui::End();
 
 		return true;
 	}
+
 
 	bool Event() {
 		if (window->pollEvent(event)) {
@@ -598,7 +617,7 @@ public:
 	}
 
 
-	void SetFPS(double fps) {
+	void SetFPS(double fps = 60) {
 		time.SetFPS(fps);
 	}
 
@@ -610,7 +629,7 @@ public:
 		return time.getCpuTime();
 	}
 
-	bool Play(bool _p) {
+	bool Play(bool _p = true) {
 		playable = _p;
 		return true;
 	}
@@ -690,11 +709,10 @@ protected:
 	Time time;
 	sf::Clock deltaClock;
 
-
 	int clickedData = 0;	
 
 	bool settings;
-	bool playable = false;
+	bool playable = true;
 	bool isCreateOpen = false;
 
 	ImGui::FileBrowser textureFileBrowser;
