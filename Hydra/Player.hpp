@@ -4,6 +4,7 @@
 
 class Player : public ECS {
 public:
+
 	void Update() {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
 			position->x += 1;
@@ -14,6 +15,6 @@ public:
 	}
 
 	void Start() {
-		Log::GetLogger().Info("Spawn");
+		//NULL
 	}
 };

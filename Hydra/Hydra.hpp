@@ -111,12 +111,16 @@ public:
 		scale.x = _x;
 		scale.y = _y;
 	}
-	void AddComponent(ECS* component) {
-		components.push_back(component);
+	template <typename T>
+	T& AddComponent() {
+		T* component = new T();
 		component->Start();
 		component->position = &position;
 		component->scale = &scale;
 		component->textureRect = &textureRect;
+		std::unique_ptr<ECS> ptr(component);
+		components.push_back(std::move(ptr));
+		return *component;
 	}
 
 	sf::Sprite* getSprite() {
@@ -141,7 +145,7 @@ public:
 
 	bool Update() {
 
-		for (auto* b : components) {
+		for (auto& b : components) {
 			b->Update();
 		}
 		shape->setPosition(sf::Vector2f(position.x, position.y));
@@ -170,11 +174,16 @@ public:
 		return name;
 	}
 
+	bool SetName(std::string _name) {
+		name = _name;
+		return true;
+	}
+
 protected:
 	sf::Sprite* shape;
 	std::string name;
 	sf::RenderWindow* window;
-	std::vector<ECS*> components;
+	std::vector<std::unique_ptr<ECS>> components;
 	sf::Texture o_Texture;
 	std::string textureDirectory;
 
@@ -190,6 +199,16 @@ public:
 	bool SetWindow(sf::RenderWindow* v_RenderWindow) { e_RenderWindow = v_RenderWindow; return true;}
 
 	Mesh* Instantiate(Mesh* _mesh){
+		for (auto& a : GetRenderObjects()) {
+			std::stringstream ss;
+			ss << _mesh->GetObjectName();
+			if (a->GetObjectName() == ss.str()) {
+				ss = std::stringstream();
+				ss << _mesh->GetObjectName() << " (ID: " << rand() << ")";
+				_mesh->SetName(ss.str());
+				break;
+			}
+		}
 		_mesh->Initialize();
 		_mesh->SetWindow(e_RenderWindow);
 		e_RenderObjects.push_back(_mesh);
@@ -477,13 +496,6 @@ public:
 				std::stringstream ss;
 				ss << b;
 				if (ss.str() != "") {
-					for (auto& a : scene.GetRenderObjects()->GetRenderObjects()) {
-						if (a->GetObjectName() == ss.str()) {
-							ss = std::stringstream();
-							ss << b <<" (ID: " << rand() << ")";
-							break;
-						}
-					}
 					scene.GetRenderObjects()->Instantiate(new Mesh(ss.str()));
 					isCreateOpen = false;
 				}
