@@ -18,13 +18,97 @@
     <ClCompile Include="Hydra.cpp">
       <Filter>Kaynak Dosyalar</Filter>
     </ClCompile>
-    <ClCompile Include="..\vendor\imgui\imgui_tables.cpp">
+    <ClCompile Include="..\vendor\yaml-cpp\src\binary.cpp">
       <Filter>Kaynak Dosyaları</Filter>
     </ClCompile>
-    <ClCompile Include="..\vendor\imgui\imgui_widgets.cpp">
+    <ClCompile Include="..\vendor\yaml-cpp\src\contrib\graphbuilder.cpp">
       <Filter>Kaynak Dosyaları</Filter>
     </ClCompile>
-    <ClCompile Include="..\vendor\imgui\imgui-SFML.cpp">
+    <ClCompile Include="..\vendor\yaml-cpp\src\contrib\graphbuilderadapter.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\convert.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\depthguard.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\directives.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\emit.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitfromevents.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitter.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitterstate.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitterutils.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\exceptions.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\exp.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\memory.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\node.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\nodebuilder.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\nodeevents.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\node_data.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\null.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\ostream_wrapper.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\parse.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\parser.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\regex_yaml.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\scanner.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\scanscalar.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\scantag.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\scantoken.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\simplekey.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\singledocparser.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\stream.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\yaml-cpp\src\tag.cpp">
       <Filter>Kaynak Dosyaları</Filter>
     </ClCompile>
     <ClCompile Include="..\vendor\imgui\imgui.cpp">
@@ -36,10 +120,91 @@
     <ClCompile Include="..\vendor\imgui\imgui_draw.cpp">
       <Filter>Kaynak Dosyaları</Filter>
     </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_tables.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui_widgets.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\imgui\imgui-SFML.cpp">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hydra.hpp">
       <Filter>Kaynak Dosyalar</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Kaynak Dosyalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\collectionstack.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\contrib\graphbuilderadapter.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\directives.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\emitterstate.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\emitterutils.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\exp.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\indentation.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\nodebuilder.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\nodeevents.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\ptr_vector.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\regeximpl.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\regex_yaml.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\scanner.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\scanscalar.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\scantag.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\setting.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\singledocparser.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\stream.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\streamcharsource.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\stringsource.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\tag.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\yaml-cpp\src\token.h">
+      <Filter>Kaynak Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\imgui\imgui.h">
+      <Filter>Kaynak Dosyaları</Filter>
     </ClInclude>
     <ClInclude Include="..\vendor\imgui\imgui_internal.h">
       <Filter>Kaynak Dosyaları</Filter>
@@ -65,14 +230,8 @@
     <ClInclude Include="..\vendor\imgui\imconfig-SFML.h">
       <Filter>Kaynak Dosyaları</Filter>
     </ClInclude>
-    <ClInclude Include="..\vendor\imgui\imgui.h">
-      <Filter>Kaynak Dosyaları</Filter>
-    </ClInclude>
     <ClInclude Include="..\vendor\imgui\imfilebrowser.h">
       <Filter>Kaynak Dosyaları</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.hpp">
-      <Filter>Kaynak Dosyalar</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,7 +1,9 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <SFML/Graphics.hpp>
+#include <yaml-cpp/yaml.h>
 #include <iostream>
+#include <bitset>
 #include <future>
 #include <vector>
 #include <chrono>
@@ -18,6 +20,16 @@ typedef unsigned int uint_t;
 using namespace std::chrono;
 
 
+class Utils {
+public:
+	static std::string StringToBinary(std::string data) {
+		std::string binary = "";
+		for (auto& b : data) {
+			binary += std::bitset<8> (b).to_string();
+		}
+		return binary;
+	}
+};
 
 class Vector2 {
 public:
@@ -150,7 +162,7 @@ public:
 		}
 		shape->setPosition(sf::Vector2f(position.x, position.y));
 		shape->setScale(sf::Vector2f(scale.x, scale.y));
-		shape->setTextureRect(sf::IntRect(32, 32, textureRect.x, textureRect.y));
+		shape->setTextureRect(sf::IntRect(64, 64, textureRect.x, textureRect.y));
 		return true;
 	}
 
@@ -299,49 +311,55 @@ public:
 		return true;
 	}
 
+	std::string GetSceneName() {
+		return sceneName;
+	}
+
 	bool LoadScene(std::string path) {
-		_set_abort_behavior(0, _WRITE_ABORT_MSG);
-		s_RenderObjects.Clear();
-		_saveFile.clear();
-		LoadFile(path);
+		std::ifstream stream(path);
+		std::stringstream buffer;
+		buffer << stream.rdbuf();
+		YAML::Node sceneData = YAML::Load(buffer.str());
+		
 
-		for (size_t i = 0; i < _saveFile.size(); i++) {
+		if(!sceneData["Scene"])
+			return false;
+		sceneName = sceneData["Scene"].as<std::string>();
+		
+		GetRenderObjects()->Clear();
 
-			if (_saveFile[i] == "[GAMEOBJECT]") {
-				struct Entity {
+		auto entities = sceneData["Entities"];
+		if (entities) {
+			for (auto entity : entities) {
+				struct EntityData {
 					std::string name;
-					float posx = 0;
-					float posy = 0;
-					float scalex = 0;
-					float scaley = 0;
-					std::string textureLocation;
+					std::string texturePath;
+					float positionX;
+					float positionY;
+					float scaleX;
+					float scaleY;
 				};
-				Entity ent;
-				try{
-					ent.name = _saveFile[i + 1];
-					ent.posx = std::stof(_saveFile[i + 2]);
-					ent.posy = std::stof(_saveFile[i + 3]);
-					ent.scalex = std::stof(_saveFile[i + 4]);
-					ent.scaley = std::stof(_saveFile[i + 5]);
-					ent.textureLocation = _saveFile[i + 6];
-				}
-				catch (const std::invalid_argument& b) {
-					std::stringstream ss;
-					ss << "Cannot load scene (" << b.what() << ") " << "[" << __FILE__ << ":" << __LINE__ << "]";
-					Log::GetLogger().Error(ss.str());
-					return false;
-				}
-				Mesh* m = s_RenderObjects.Instantiate(new Mesh(ent.name));
-				m->position.x = ent.posx;
-				m->position.y = ent.posy;
-				m->scale.x = ent.scalex;
-				m->scale.y = ent.scaley;
-				m->LoadTexture(ent.textureLocation);
+				EntityData ent;
+				ent.name = entity["Object Name"].as<std::string>();
+				ent.texturePath = entity["Object Texture"].as<std::string>();
+				ent.positionX = entity["Position X"].as<float>();
+				ent.positionY = entity["Position Y"].as<float>();
+				ent.scaleX = entity["Scale X"].as<float>();
+				ent.scaleY = entity["Scale Y"].as<float>();
 
+				Mesh* object = GetRenderObjects()->Instantiate(new Mesh(ent.name));
+				object->position.x = ent.positionX;
+				object->position.y = ent.positionY;
+				object->scale.x = ent.scaleX;
+				object->scale.y = ent.scaleY;
+				object->LoadTexture(ent.texturePath);
 
 			}
+
 		}
-		return true;
+
+		Log::GetLogger().Info("Scene loaded successfully.");
+
 	};
 
 
@@ -349,34 +367,32 @@ public:
 		return &s_RenderObjects;
 	}
 protected:
-	bool LoadFile(std::string path) {
-		std::ifstream ss;
-		ss.open(path);
-		std::string data;
-		if (ss.is_open()) {
-			while (std::getline(ss, data)) {
-				_saveFile.push_back(data);
-			}
-		}
-		return true;
-	}
 
 	bool SaveFile(std::string path) {
 		std::ofstream ss;
 		ss.open(path);
-		for(auto& b: s_RenderObjects.GetRenderObjects()){
-			ss << "[GAMEOBJECT]\n";
-			ss << b->GetObjectName() << std::endl;
-			ss << b->position.x << std::endl;
-			ss << b->position.y << std::endl;
-			ss << b->scale.x << std::endl;
-			ss << b->scale.y << std::endl;
-			ss << b->GetTextureDirectory() << std::endl;
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "Scene" << YAML::Value << sceneName;
+		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
+		for (auto& b : s_RenderObjects.GetRenderObjects()) {
+			out << YAML::BeginMap;
+			out << YAML::Key << "Object Name" << YAML::Value << b->GetObjectName();
+			out << YAML::Key << "Object Texture" << YAML::Value << b->GetTextureDirectory();
+			out << YAML::Key << "Position X" << YAML::Value << b->position.x;
+			out << YAML::Key << "Position Y" << YAML::Value << b->position.y;
+			out << YAML::Key << "Scale X" << YAML::Value << b->scale.x;
+			out << YAML::Key << "Scale Y" << YAML::Value << b->scale.y;
+			out << YAML::EndMap;
 		}
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
+		ss << out.c_str();
+
 		return true;
 	}
 	RenderObjects s_RenderObjects;
-	std::vector<std::string> _saveFile;
+	std::string sceneName;
 };
 
 class Window {
@@ -420,6 +436,9 @@ public:
 
 		if (sceneBrowser.HasSelected()) {
 			scene.LoadScene(sceneBrowser.GetSelected().generic_string());
+			std::stringstream ss;
+			ss << "Hydra Editor [" << sceneBrowser.GetSelected().generic_string() << "]";
+			window->setTitle(ss.str());
 			sceneBrowser.ClearSelected();
 		}
 
@@ -438,7 +457,7 @@ public:
 				if (ImGui::MenuItem("New")) {
 					scene.ResetScene();
 				}
-				if (ImGui::MenuItem("Save")) {
+				if (ImGui::MenuItem("Save Scene")) {
 					saveSceneBrowser.Open();
 				}
 				if (ImGui::MenuItem("Load")) {
@@ -726,6 +745,7 @@ protected:
 	bool settings;
 	bool playable = true;
 	bool isCreateOpen = false;
+	bool isSceneCreatorOpen = false; //TODO
 
 	ImGui::FileBrowser textureFileBrowser;
 	ImGui::FileBrowser sceneBrowser;

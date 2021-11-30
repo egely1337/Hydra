@@ -8,7 +8,7 @@ public:
 	Mesh* mesh;
 	void Update() {
 
-	} 
+	}
 
 
 	void Start() {
@@ -19,5 +19,5 @@ public:
 
 int main() {
 	Window* window = new App();
-	window->Init("Hydra", 1920, 1080);
+	window->Init("Hydra Editor [Untitled]", 1920, 1080);
 }
