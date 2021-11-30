@@ -1,5 +1,6 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
+#include <random>
 #include <SFML/Graphics.hpp>
 #include <yaml-cpp/yaml.h>
 #include <iostream>
@@ -16,8 +17,12 @@
 #include <Windows.h>
 #include <stdexcept>
 #include <fstream>
+#include "UUID.h"
 typedef unsigned int uint_t;
 using namespace std::chrono;
+
+
+
 
 
 class Utils {
@@ -112,6 +117,7 @@ public:
 	}
 
 	void Initialize() {
+		UUID = uuid::generate_uuid_v4();
 		shape = new sf::Sprite(o_Texture);
 	}
 
@@ -146,6 +152,7 @@ public:
 			if (o_Texture.loadFromFile("default_assets/square.png")) {
 				Log::GetLogger().Info("Succesfully get default texture.");
 				textureDirectory = "default_assets/square.png";
+				return true;
 			}
 			return false;
 		}
@@ -191,6 +198,13 @@ public:
 		return true;
 	}
 
+	std::string GetUUID() {
+		return UUID;
+	}
+	void SetUUID(std::string _uuid) {
+		UUID = _uuid;
+	}
+
 protected:
 	sf::Sprite* shape;
 	std::string name;
@@ -198,6 +212,7 @@ protected:
 	std::vector<std::unique_ptr<ECS>> components;
 	sf::Texture o_Texture;
 	std::string textureDirectory;
+	std::string UUID;
 
 	
 
@@ -332,6 +347,7 @@ public:
 		if (entities) {
 			for (auto entity : entities) {
 				struct EntityData {
+					std::string UUID;
 					std::string name;
 					std::string texturePath;
 					float positionX;
@@ -340,6 +356,7 @@ public:
 					float scaleY;
 				};
 				EntityData ent;
+				ent.UUID = entity["GUID"].as<std::string>();
 				ent.name = entity["Object Name"].as<std::string>();
 				ent.texturePath = entity["Object Texture"].as<std::string>();
 				ent.positionX = entity["Position X"].as<float>();
@@ -348,6 +365,7 @@ public:
 				ent.scaleY = entity["Scale Y"].as<float>();
 
 				Mesh* object = GetRenderObjects()->Instantiate(new Mesh(ent.name));
+				object->SetUUID(ent.UUID);
 				object->position.x = ent.positionX;
 				object->position.y = ent.positionY;
 				object->scale.x = ent.scaleX;
@@ -359,7 +377,7 @@ public:
 		}
 
 		Log::GetLogger().Info("Scene loaded successfully.");
-
+		return true;
 	};
 
 
@@ -377,6 +395,7 @@ protected:
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& b : s_RenderObjects.GetRenderObjects()) {
 			out << YAML::BeginMap;
+			out << YAML::Key << "GUID" << YAML::Value << b->GetUUID();
 			out << YAML::Key << "Object Name" << YAML::Value << b->GetObjectName();
 			out << YAML::Key << "Object Texture" << YAML::Value << b->GetTextureDirectory();
 			out << YAML::Key << "Position X" << YAML::Value << b->position.x;
