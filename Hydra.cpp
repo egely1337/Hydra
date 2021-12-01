@@ -12,6 +12,7 @@ public:
 
 
 	void Start() {
+		scene.ResetScene();
 		mesh = scene.GetRenderObjects()->Instantiate(new Mesh("Hyper"));
 		mesh->AddComponent<Player>();
 	}

@@ -34,6 +34,44 @@ public:
 		}
 		return binary;
 	}
+
+	static bool startswith(std::string data, std::string arg) {
+		std::stringstream ss;
+		for (auto& b : data) {
+			if (b == 0x20) {
+				std::cout << "Spotted!";
+				break;
+			}
+			ss << b;
+		}
+		if (ss.str() == arg) {
+			return true;
+		}
+		return false;
+	}
+
+	static std::vector<std::string> getwords(std::string data) {
+		std::stringstream ss;
+		std::vector<std::string> array;
+		int i = 0;
+		for (auto& b : data) {
+			ss << b;
+			i++;
+			switch (b)
+			{
+			case 0x20:
+				array.push_back(ss.str());
+				ss = std::stringstream();
+				break;
+			}
+			if (i > data.size() - 1) {
+				array.push_back(ss.str());
+				ss = std::stringstream();
+				break;
+			}
+		}
+		return array;
+	}
 };
 
 class Vector2 {
@@ -311,6 +349,11 @@ public:
 		return true;
 	};
 
+	bool GenerateGUID() {
+		sceneGUID = uuid::generate_uuid_v4();
+		return true;
+	}
+
 
 	bool SaveScene(std::string path) {
 		_set_abort_behavior(0, _WRITE_ABORT_MSG);
@@ -323,6 +366,7 @@ public:
 
 	bool ResetScene() {
 		s_RenderObjects.Clear();
+		GenerateGUID();
 		return true;
 	}
 
@@ -340,6 +384,7 @@ public:
 		if(!sceneData["Scene"])
 			return false;
 		sceneName = sceneData["Scene"].as<std::string>();
+		sceneGUID = sceneData["Scene GUID"].as<std::string>();
 		
 		GetRenderObjects()->Clear();
 
@@ -392,6 +437,7 @@ protected:
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << sceneName;
+		out << YAML::Key << "Scene GUID" << YAML::Value << sceneGUID;
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& b : s_RenderObjects.GetRenderObjects()) {
 			out << YAML::BeginMap;
@@ -411,7 +457,8 @@ protected:
 		return true;
 	}
 	RenderObjects s_RenderObjects;
-	std::string sceneName;
+	std::string sceneName = "Untitled";
+	std::string sceneGUID = "NUL";
 };
 
 class Window {
