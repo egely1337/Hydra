@@ -18,13 +18,82 @@
 #include <stdexcept>
 #include <fstream>
 #include "UUID.h"
+#include <Psapi.h>
 typedef unsigned int uint_t;
 using namespace std::chrono;
 
 
+//Some useful stuff
+#define INFO(a) Logger->Info(a)
+#define WARNING(a) Logger->Warning(a)
+#define ERROR(a) Logger->Error(a)
+#define SPAWN(a) SceneManager->Instantiate(a)
+class Mesh;
+class RenderObjects;
+
+
+class Time {
+public:
+	float fpsRates[5];
+
+	bool SetWindow(sf::RenderWindow* window) {
+		m_Window = window;
+		for (int i = 0; i < 5; i++) {
+			fpsRates[i] = 0;
+		}
+		return true;
+	}
+	bool Update() {
+		if (duration_cast<milliseconds>(high_resolution_clock::now() - now) >= milliseconds(1000 / fps)) {
+			framePerSecond++;
+			lastCPUTime = duration_cast<milliseconds>(high_resolution_clock::now() - now).count();
+			now = high_resolution_clock::now();
+			return true;
+		}
+		if (duration_cast<seconds>(high_resolution_clock::now() - refresh) >= seconds{ 1 }) {
+			std::stringstream ss;
+			_fps = framePerSecond;
+			framePerSecond = 0;
+			fpsVector.push_back(_fps);
+			if (fpsVector.size() == 5) {
+				for (int i = 0; i < 5; i++) {
+					fpsRates[i] = fpsVector[i]; 
+				}
+				fpsVector.clear();
+			}
+			refresh = high_resolution_clock::now();
+		}
+		Sleep(1000 / fps);
+
+
+		return false;
+	}
 
 
 
+	int GetFps() {
+		return _fps;
+	}
+
+	bool SetFPS(long _framePerSecond) {
+		fps = _framePerSecond;
+		return true;
+	}
+
+	float deltaTime() {
+		return lastCPUTime;
+	}
+protected:
+	time_point<high_resolution_clock> now = high_resolution_clock::now();
+	time_point<high_resolution_clock> refresh = high_resolution_clock::now();
+	sf::RenderWindow* m_Window;
+	int framePerSecond = 0;
+	int _fps;
+	long fps = 10;
+	float lastCPUTime = 0;
+	std::vector<int> fpsVector;
+	
+};
 class Utils {
 public:
 	static std::string StringToBinary(std::string data) {
@@ -73,14 +142,13 @@ public:
 		return array;
 	}
 };
-
 class Vector2 {
 public:
+	Vector2 operator+=(Vector2 temp) {this->x += temp.x;this->y += temp.y;return *this;}	
 	Vector2(float _x = 1, float _y = 1) { x = _x, y = _y; }
 	float x;
 	float y;
 };
-
 class Keyboard {
 public:
 	static Keyboard GetKeyboard(){
@@ -89,8 +157,6 @@ public:
 	}
 	//TODO
 };
-
-
 class Log {
 public:
 	std::vector<std::string> logData;
@@ -128,26 +194,28 @@ public:
 	}
 
 };
-
 class ECS {
 public:
 	//TODO
-	virtual void Start(){};
-	virtual void Update(){};
+	virtual void Start() {};
+	virtual void Update() {};
 
 	Vector2* position;
 	Vector2* scale;
 	Vector2* textureRect;
+	Time* Time;
+	Log* Logger;
+	Mesh* This;
+	RenderObjects* SceneManager;
 };
-
-
 class Mesh {
 public:
 	Vector2 position;
 	Vector2 scale;
 	Vector2 textureRect;
+	RenderObjects* scene;
 
-	Mesh(std::string gameObject,std::string textureLoc = "default_assets/square.png") {
+	Mesh(std::string gameObject, std::string textureLoc = "default_assets/square.png") {
 		LoadTexture(textureLoc);
 		name = gameObject;
 		textureRect.x = 32;
@@ -167,17 +235,39 @@ public:
 		scale.x = _x;
 		scale.y = _y;
 	}
+
+
+	void DeleteComponent(int _id) {
+		components.erase(components.begin() + _id);
+	}
+
 	template <typename T>
 	T& AddComponent() {
 		T* component = new T();
-		component->Start();
 		component->position = &position;
 		component->scale = &scale;
 		component->textureRect = &textureRect;
-		std::unique_ptr<ECS> ptr(component);
-		components.push_back(std::move(ptr));
+		component->Time = time;
+		component->Logger = &Log::GetLogger();
+		component->This = this;
+		component->SceneManager = scene;
+		component->Start();
+		components.push_back((ECS*)component);
 		return *component;
 	}
+
+	void AddComp(ECS* component) {
+		component->position = &position;
+		component->scale = &scale;
+		component->textureRect = &textureRect;
+		component->Time = time;
+		component->Logger = &Log::GetLogger();
+		component->This = this;
+		component->SceneManager = scene;
+		component->Start();
+		components.push_back(component);
+	}
+
 
 	sf::Sprite* getSprite() {
 		return shape;
@@ -201,7 +291,6 @@ public:
 
 
 	bool Update() {
-
 		for (auto& b : components) {
 			b->Update();
 		}
@@ -243,27 +332,26 @@ public:
 		UUID = _uuid;
 	}
 
+	Time* time;
+
+	std::vector<ECS*> *GetComponent() {
+		return &components;
+	}
 protected:
 	sf::Sprite* shape;
 	std::string name;
 	sf::RenderWindow* window;
-	std::vector<std::unique_ptr<ECS>> components;
+	std::vector<ECS*> components;
 	sf::Texture o_Texture;
 	std::string textureDirectory;
 	std::string UUID;
-
-	
-
-
 };
-
-
 class RenderObjects {
 public:
 
-	bool SetWindow(sf::RenderWindow* v_RenderWindow) { e_RenderWindow = v_RenderWindow; return true;}
+	bool SetWindow(sf::RenderWindow* v_RenderWindow) { e_RenderWindow = v_RenderWindow; return true; }
 
-	Mesh* Instantiate(Mesh* _mesh){
+	Mesh* Instantiate(Mesh* _mesh) {
 		for (auto& a : GetRenderObjects()) {
 			std::stringstream ss;
 			ss << _mesh->GetObjectName();
@@ -276,11 +364,13 @@ public:
 		}
 		_mesh->Initialize();
 		_mesh->SetWindow(e_RenderWindow);
+		_mesh->time = windowTime;
+		_mesh->scene = this;
 		e_RenderObjects.push_back(_mesh);
 		return _mesh;
 	}
 
-	std::vector<Mesh*> GetRenderObjects(){
+	std::vector<Mesh*> GetRenderObjects() {
 		return e_RenderObjects;
 	}
 
@@ -291,58 +381,57 @@ public:
 	void ClearById(int _id) {
 		e_RenderObjects.erase(e_RenderObjects.begin() + _id);
 	}
+	Time* windowTime;
 protected:
 	sf::RenderWindow* e_RenderWindow;
 	std::vector<Mesh*> e_RenderObjects;
 };
-
-class Time {
+class Assembly {
 public:
+	bool LoadModules() {
+		moduleData = LoadLibrary(L"assemblies/CppAssembly.dll");
+		if (moduleData == NULL) return false;
+		else {
+			std::vector<ECS*>(*ecs)() = (std::vector<ECS*>(*)())GetProcAddress(moduleData, "GetClasses");
+			if (ecs == 0) return false;
+			classes = ecs(); 
+			SetClassNames(); return true;
 
-	bool SetWindow(sf::RenderWindow* window) {
-		m_Window = window;
-		return true;
-	}
-	bool Update() {
-		if (duration_cast<milliseconds>(high_resolution_clock::now() - now) >= milliseconds(1000 / fps)) {
-			framePerSecond++;
-			lastCPUTime = duration_cast<milliseconds>(high_resolution_clock::now() - now).count();
-			now = high_resolution_clock::now();
-			return true;
 		}
-		if (duration_cast<seconds>(high_resolution_clock::now() - refresh) >= seconds{ 1 }) {
-			std::stringstream ss;
-			_fps = framePerSecond;
-			framePerSecond = 0;
-			refresh = high_resolution_clock::now();
+	}
+
+	bool SetClassNames() {
+		for (auto b : classes) {
+			classNames.push_back(typeid(*b).name());
 		}
-
-		return false;
-	}
-
-	int GetFps() {
-		return _fps;
-	}
-
-	bool SetFPS(long _framePerSecond) {
-		fps = _framePerSecond;
 		return true;
 	}
 
-	float getCpuTime() {
-		return lastCPUTime;
+	std::vector<ECS*>& getAssemblies() {
+		return classes;
 	}
-protected:
-	time_point<high_resolution_clock> now = high_resolution_clock::now();
-	time_point<high_resolution_clock> refresh = high_resolution_clock::now();
-	sf::RenderWindow* m_Window;
-	int framePerSecond = 0;
-	int _fps;
-	long fps = 10;
-	float lastCPUTime = 0;
+
+	std::vector<std::string>& getClassNames() {
+		return classNames;
+	}
+private:
+	HMODULE moduleData;
+	std::vector<ECS*> classes;
+	std::vector<std::string> classNames;
 };
+class SystemInfo {
 
+public:
+	SystemInfo() {
+		GetSystemInfo(&sysInfo);
+	}
 
+	DWORD GetCPUCount() {
+		return sysInfo.dwNumberOfProcessors;
+	}
+private:
+	SYSTEM_INFO sysInfo;
+};
 class Scene {
 public:
 	bool SaveScene() { 
@@ -460,24 +549,24 @@ protected:
 	std::string sceneName = "Untitled";
 	std::string sceneGUID = "NUL";
 };
-
 class Window {
 public:
 	Window() {}
 	~Window() {}
-	bool Init(const char* title, uint_t width, uint_t height) { window = new sf::RenderWindow(sf::VideoMode(width, height), title); Application(); return true; }
+	bool Init(const char* title, uint_t width, uint_t height) { window = new sf::RenderWindow(sf::VideoMode(width, height), title); return Application(); }
 	bool Application(){
 		Log::GetLogger().Info("Engine trying to get ready.");
 		time.SetWindow(window);
 		ImGui::SFML::Init(*window);
 		scene.GetRenderObjects()->SetWindow(window);
 		Log::GetLogger().Info("Ready!");
-		SetFPS(60);
+		scene.GetRenderObjects()->windowTime = &time;
 		std:async(std::launch::async, &Window::Start, this);
+		assembly.LoadModules();
 		while (window->isOpen()) {
-			while (time.Update()) {
-				Update();
-				ApplicationUpdate();
+			do {
+				Window::Update();
+				Window::ApplicationUpdate();
 				window->clear();
 				window->pushGLStates();
 				Render();
@@ -488,10 +577,10 @@ public:
 					ImGui::SFML::Render();
 				window->display();
 				Event();
-			}
+			} while (time.Update());
 		}
 		ImGui::SFML::Shutdown();
-		return true;
+		return false;
 	}
 
 
@@ -594,13 +683,25 @@ public:
 			ImGui::End();
 		}
 
+		MEMORYSTATUSEX memex;
+		memex.dwLength = sizeof(memex);
+		GlobalMemoryStatusEx(&memex);
+
+		PROCESS_MEMORY_COUNTERS_EX ex;
+		GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&ex, sizeof(ex));
+
 		ImGui::Begin("engine_data", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 		std::stringstream ss;
-		ss << "FPS: " << GetFPS() << "\n" << "CPU Time : " << getCpuTime() << "ms";
-		ImGui::SetWindowSize({ 200,200 });
+		ss << "FPS: " << GetFPS() << "\n" << "CPU Time : " << getCpuTime() << "ms" << "\n" << 
+			"Memory: " << memex.ullTotalPhys / 1024 / 1024 << "MB"
+			<< "\nUsed Memory: " << ex.PrivateUsage / 1024 / 1024 << "MB"
+			<< "\nProcessors: " << sysInfo.GetCPUCount();
+		ImGui::SetWindowSize({ 230,200 });
 		ImGui::SetWindowPos({ 300,20 });
 		ImGui::Text(ss.str().c_str());
+		ImGui::PlotLines("FPS Graphic", time.fpsRates, 5);
 		ImGui::End();
+
 
 		ImGui::Begin("Inspector", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		if (scene.GetRenderObjects()->GetRenderObjects().empty() == false) {
@@ -612,16 +713,43 @@ public:
 				float* t_X = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.x;
 				float* t_Y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.y;
 				ImGui::Text(scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetObjectName().c_str());
-				ImGui::Text("Position");
-				ImGui::SliderFloat("Position X", x, 0.f, window->getSize().x);
-				ImGui::SliderFloat("Position Y", y, 0.f, window->getSize().y);
-				ImGui::Text("Scale");
-				ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
-				ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
-				ImGui::Text("Texture");
-				ImGui::SliderFloat("Texture X", t_X, 0.f, 1920);
-				ImGui::SliderFloat("Texture Y", t_Y, 0.f, 1080);
-				ImGui::Button("Add Component");
+				if (ImGui::CollapsingHeader("Position")) {
+					ImGui::SliderFloat("Position X", x, 0.f, window->getSize().x);
+					ImGui::SliderFloat("Position Y", y, 0.f, window->getSize().y);
+				}
+				if (ImGui::CollapsingHeader("Scale")) {
+					ImGui::SliderFloat("Scale X", s_X, 0.f, 100);
+					ImGui::SliderFloat("Scale Y", s_Y, 0.f, 100);
+				}
+				if (ImGui::CollapsingHeader("Texture")) {
+					ImGui::SliderFloat("Texture X", t_X, 0.f, 1920);
+					ImGui::SliderFloat("Texture Y", t_Y, 0.f, 1080);
+					if (ImGui::Button("Change Texture")) {
+						textureFileBrowser.Open();
+					}
+				}
+
+				//If gives an error, just remove this for your safety.
+				if (ImGui::CollapsingHeader("Components"))
+				{
+					for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponent()->size(); i++) {
+						if (ImGui::CollapsingHeader(assembly.getClassNames()[i].c_str())) {
+							if (ImGui::Button("Delete Component")) {
+								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->DeleteComponent(i);
+							}
+						}
+					}
+					if (ImGui::CollapsingHeader("Add Component")) {
+						for (int i = 0; i < assembly.getAssemblies().size(); i++) {
+							if (ImGui::Button(assembly.getClassNames()[i].c_str())) {
+								ECS* copy = assembly.getAssemblies()[i];
+								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->AddComp(copy);
+							}
+						}
+					}
+				}
+				//Info ends.
+
 				if (ImGui::Button("Delete Object")) {
 					try {
 						scene.GetRenderObjects()->ClearById(clickedData);
@@ -639,9 +767,6 @@ public:
 				if (textureFileBrowser.HasSelected()) {
 					scene.GetRenderObjects()->GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
 					textureFileBrowser.ClearSelected();
-				}
-				if (ImGui::Button("Change Texture")) {
-					textureFileBrowser.Open();
 				}
 			}
 			ImGui::SetWindowPos({ (float)window->getSize().x - 300, 20 });
@@ -677,17 +802,16 @@ public:
 
 					for (auto b : Log::GetLogger().logData) {
 						stream << b << "\n";
-						std::cout << b;
 					}
 					Log::GetLogger().Info("Processing logs.");
 					stream.close();
 					window->close();
-					exit(0);
 				}
 			}
 		}
 		return true;
 	}
+
 
 	void ApplicationUpdate() {
 
@@ -723,7 +847,7 @@ public:
 	}
 
 	float getCpuTime() {
-		return time.getCpuTime();
+		return time.deltaTime();
 	}
 
 	bool Play(bool _p = true) {
@@ -804,8 +928,8 @@ protected:
 	sf::Event event;
 	Scene scene;
 	Time time;
+	Assembly assembly;
 	sf::Clock deltaClock;
-
 	int clickedData = 0;	
 
 	bool settings;
@@ -816,4 +940,7 @@ protected:
 	ImGui::FileBrowser textureFileBrowser;
 	ImGui::FileBrowser sceneBrowser;
 	ImGui::FileBrowser saveSceneBrowser;
+
+	SystemInfo sysInfo;
+	
 };
