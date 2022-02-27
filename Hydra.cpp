@@ -5,20 +5,20 @@
 
 class App : public Window {
 public:
-	Mesh* mesh;
 	void Update() {
 
 	}
 
 
 	void Start() {
-		scene.ResetScene();
-		mesh = scene.GetRenderObjects()->Instantiate(new Mesh("Hyper"));
-		mesh->AddComponent<Player>();
+		SetFPS(144);
 	}
 };
 
-int main() {
-	Window* window = new App();
-	window->Init("Hydra Editor [Untitled]", 1920, 1080);
+extern "C" {
+	__declspec(dllexport) int _startengine() {
+		Window* window = new App();
+		int exit_code = window->Init("Hydra Editor [Untitled]", 1920, 1080);
+		return exit_code;
+	}
 }

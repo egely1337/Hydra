@@ -1,36 +1,10 @@
 #pragma once
-#define _CRT_SECURE_NO_WARNINGS
-#include <random>
-#include <SFML/Graphics.hpp>
-#include <yaml-cpp/yaml.h>
-#include <iostream>
-#include <bitset>
-#include <future>
-#include <vector>
-#include <chrono>
-#include <sstream>
-#define SFML_STATIC
-#include <imgui.h>
-#include <imgui_internal.h>
-#include <imgui-SFML.h>
-#include <imfilebrowser.h>
-#include <Windows.h>
-#include <stdexcept>
-#include <fstream>
-#include "UUID.h"
-#include <Psapi.h>
-typedef unsigned int uint_t;
-using namespace std::chrono;
+#include "Include.h"
 
-
-//Some useful stuff
-#define INFO(a) Logger->Info(a)
-#define WARNING(a) Logger->Warning(a)
-#define ERROR(a) Logger->Error(a)
-#define SPAWN(a) SceneManager->Instantiate(a)
-class Mesh;
-class RenderObjects;
-
+class Language{
+private:
+	//TODO
+};
 
 class Time {
 public:
@@ -63,7 +37,7 @@ public:
 			}
 			refresh = high_resolution_clock::now();
 		}
-		Sleep(1000 / fps);
+		Sleep((1000 / fps));
 
 
 		return false;
@@ -241,31 +215,31 @@ public:
 		components.erase(components.begin() + _id);
 	}
 
-	template <typename T>
-	T& AddComponent() {
-		T* component = new T();
-		component->position = &position;
-		component->scale = &scale;
-		component->textureRect = &textureRect;
-		component->Time = time;
-		component->Logger = &Log::GetLogger();
-		component->This = this;
-		component->SceneManager = scene;
-		component->Start();
-		components.push_back((ECS*)component);
-		return *component;
-	}
 
-	void AddComp(ECS* component) {
-		component->position = &position;
-		component->scale = &scale;
-		component->textureRect = &textureRect;
-		component->Time = time;
-		component->Logger = &Log::GetLogger();
-		component->This = this;
-		component->SceneManager = scene;
-		component->Start();
-		components.push_back(component);
+	void AddComponent(ECS* component) {
+		bool error = false;
+		for (auto b : components) {
+			if (typeid(*b).name() == typeid(*component).name()) {
+				error = true;
+				Log::GetLogger().Info("You can't add same classes.");
+				break;
+			}
+		}
+		if (error == true) return;
+		try {
+			component->position = &position;
+			component->scale = &scale;
+			component->textureRect = &textureRect;
+			component->Time = time;
+			component->Logger = &Log::GetLogger();
+			component->This = this;
+			component->SceneManager = scene;
+			component->Start();
+			components.push_back(component);
+		}
+		catch (std::out_of_range& b) {
+			std::cerr << "Out of range: " << b.what() << "\n";
+		}
 	}
 
 
@@ -334,8 +308,11 @@ public:
 
 	Time* time;
 
-	std::vector<ECS*> *GetComponent() {
+	std::vector<ECS*> *GetComponents() {
 		return &components;
+	}
+	ECS* GetComponent(int _val) {
+		return components[_val];
 	}
 protected:
 	sf::Sprite* shape;
@@ -345,6 +322,15 @@ protected:
 	sf::Texture o_Texture;
 	std::string textureDirectory;
 	std::string UUID;
+
+	bool CheckComponent(ECS* _ecs) {
+		for (auto b : components) {
+			if (b == _ecs) {
+				return true;
+			}
+		}
+		return false;
+	}
 };
 class RenderObjects {
 public:
@@ -386,38 +372,46 @@ protected:
 	sf::RenderWindow* e_RenderWindow;
 	std::vector<Mesh*> e_RenderObjects;
 };
+
+class Script {
+public:
+	Script(ECS* _ecs, std::string name) {ecs = _ecs; componentName = name;}
+	ECS* ecs;
+	std::string componentName;
+};
+
 class Assembly {
 public:
 	bool LoadModules() {
 		moduleData = LoadLibrary(L"assemblies/CppAssembly.dll");
 		if (moduleData == NULL) return false;
 		else {
+			std::vector<ECS*> tempVector;
+
 			std::vector<ECS*>(*ecs)() = (std::vector<ECS*>(*)())GetProcAddress(moduleData, "GetClasses");
 			if (ecs == 0) return false;
-			classes = ecs(); 
-			SetClassNames(); return true;
-
+			tempVector = ecs();
+			for (auto* b : tempVector) {
+				std::stringstream ss;
+				ss << typeid(*b).name();
+				ss << "[0x" << b << "]";
+				classes.push_back(new Script(b, ss.str()));
+			}
 		}
 	}
 
-	bool SetClassNames() {
-		for (auto b : classes) {
-			classNames.push_back(typeid(*b).name());
-		}
-		return true;
+	void ReloadAssemblies() {
+		FreeLibrary(moduleData);
+		classes.clear();
+		Sleep(2000);
+		LoadModules();
 	}
-
-	std::vector<ECS*>& getAssemblies() {
+	std::vector<Script*>& getAssemblies() {
 		return classes;
-	}
-
-	std::vector<std::string>& getClassNames() {
-		return classNames;
 	}
 private:
 	HMODULE moduleData;
-	std::vector<ECS*> classes;
-	std::vector<std::string> classNames;
+	std::vector<Script*> classes;
 };
 class SystemInfo {
 
@@ -636,6 +630,9 @@ public:
 					Log::GetLogger().Clear();
 					Log::GetLogger().Info("Logs are cleared.");
 				}
+				if (ImGui::MenuItem("Reload assemblies")) {
+					assembly.ReloadAssemblies();
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
@@ -732,22 +729,34 @@ public:
 				//If gives an error, just remove this for your safety.
 				if (ImGui::CollapsingHeader("Components"))
 				{
-					for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponent()->size(); i++) {
-						if (ImGui::CollapsingHeader(assembly.getClassNames()[i].c_str())) {
-							if (ImGui::Button("Delete Component")) {
+
+					for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponents()->size(); i++) {
+						ECS* data = scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponent(i);
+						if (ImGui::CollapsingHeader(typeid(*data).name())) {
+							std::stringstream ss;
+							ss << "Delete Class " << "["  << "0x" << data << "]";
+							if (ImGui::Button(ss.str().c_str())) {
 								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->DeleteComponent(i);
 							}
 						}
-					}
-					if (ImGui::CollapsingHeader("Add Component")) {
-						for (int i = 0; i < assembly.getAssemblies().size(); i++) {
-							if (ImGui::Button(assembly.getClassNames()[i].c_str())) {
-								ECS* copy = assembly.getAssemblies()[i];
-								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->AddComp(copy);
+					} 
+				}
+				if (ImGui::CollapsingHeader("Add Component")) {
+					for (int i = 0; i < assembly.getAssemblies().size(); i++) {
+						std::stringstream ss;
+						ss << assembly.getAssemblies()[i]->componentName.c_str();
+						if (ImGui::Button(ss.str().c_str())) {
+							try {
+								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->AddComponent(assembly.getAssemblies()[i]->ecs);
+							}
+							catch (std::exception& b) {
+								std::cerr << "Exception: " << b.what() << "\n";
 							}
 						}
 					}
 				}
+
+				ImGui::Text("--------------");
 				//Info ends.
 
 				if (ImGui::Button("Delete Object")) {
