@@ -1,9 +1,26 @@
 #pragma once
 #include "Include.h"
 
+
+
+
+class Mesh;
+class RenderObjects;
+class Window;
+class GuiRenderObject;
+class Button;
+
+
 class Language{
 private:
 	//TODO
+	//TODO END
+};
+
+class GuiRenderer {
+public:
+	void Start(sf::RenderWindow* window) { ImGui::SFML::Init(*window); }
+	virtual void Update() {};
 };
 
 class Time {
@@ -19,11 +36,11 @@ public:
 	}
 	bool Update() {
 		if (duration_cast<milliseconds>(high_resolution_clock::now() - now) >= milliseconds(1000 / fps)) {
-			framePerSecond++;
 			lastCPUTime = duration_cast<milliseconds>(high_resolution_clock::now() - now).count();
 			now = high_resolution_clock::now();
 			return true;
 		}
+		framePerSecond++;
 		if (duration_cast<seconds>(high_resolution_clock::now() - refresh) >= seconds{ 1 }) {
 			std::stringstream ss;
 			_fps = framePerSecond;
@@ -42,21 +59,9 @@ public:
 
 		return false;
 	}
-
-
-
-	int GetFps() {
-		return _fps;
-	}
-
-	bool SetFPS(long _framePerSecond) {
-		fps = _framePerSecond;
-		return true;
-	}
-
-	float deltaTime() {
-		return lastCPUTime;
-	}
+	int GetFps() {return _fps;}
+	bool SetFPS(long _framePerSecond) {fps = _framePerSecond;return true;}
+	float deltaTime() {return lastCPUTime;}
 protected:
 	time_point<high_resolution_clock> now = high_resolution_clock::now();
 	time_point<high_resolution_clock> refresh = high_resolution_clock::now();
@@ -114,6 +119,11 @@ public:
 			}
 		}
 		return array;
+	}
+
+
+	static void removeClass(std::string* string) {
+		*string = std::string(string->begin() + 6, string->end());
 	}
 };
 class Vector2 {
@@ -181,6 +191,7 @@ public:
 	Log* Logger;
 	Mesh* This;
 	RenderObjects* SceneManager;
+	GuiRenderObject* GuiManager;
 };
 class Mesh {
 public:
@@ -188,34 +199,16 @@ public:
 	Vector2 scale;
 	Vector2 textureRect;
 	RenderObjects* scene;
-
 	Mesh(std::string gameObject, std::string textureLoc = "default_assets/square.png") {
 		LoadTexture(textureLoc);
 		name = gameObject;
 		textureRect.x = 32;
 		textureRect.y = 32;
 	}
-
-	void Initialize() {
-		UUID = uuid::generate_uuid_v4();
-		shape = new sf::Sprite(o_Texture);
-	}
-
-	std::string GetTextureDirectory() {
-		return textureDirectory;
-	}
-
-	void SetScale(float _x, float _y) {
-		scale.x = _x;
-		scale.y = _y;
-	}
-
-
-	void DeleteComponent(int _id) {
-		components.erase(components.begin() + _id);
-	}
-
-
+	void Initialize() {UUID = uuid::generate_uuid_v4();shape = new sf::Sprite(o_Texture);}
+	std::string GetTextureDirectory() {return textureDirectory;}
+	void SetScale(float _x, float _y) {scale.x = _x;scale.y = _y;}
+	void DeleteComponent(int _id) {components.erase(components.begin() + _id);}
 	void AddComponent(ECS* component) {
 		bool error = false;
 		for (auto b : components) {
@@ -234,6 +227,7 @@ public:
 			component->Logger = &Log::GetLogger();
 			component->This = this;
 			component->SceneManager = scene;
+			component->GuiManager = GuiManager;
 			component->Start();
 			components.push_back(component);
 		}
@@ -243,10 +237,21 @@ public:
 	}
 
 
-	sf::Sprite* getSprite() {
-		return shape;
+	//If you gets some error, delete.
+	template <typename T>
+	T& HasComponent() {
+		T* t = new T();
+		for (auto b : components) {
+			if (typeid(*b).name() == typeid(*t).name()) {
+				free(t);
+				return true;
+			}
+		}
+		
 	}
+	//Work in progress.
 
+	sf::Sprite* getSprite() {return shape;}
 	bool LoadTexture(std::string _dir) {
 		if (!o_Texture.loadFromFile(_dir)) {
 			Log::GetLogger().Error("Can't get a texture.");
@@ -265,8 +270,13 @@ public:
 
 
 	bool Update() {
-		for (auto& b : components) {
-			b->Update();
+		//If u have a problem. just delete this.
+		if (canPlayable != nullptr) {
+			if (*canPlayable == true) {
+				for (auto& b : components) {
+					b->Update();
+				}
+			}
 		}
 		shape->setPosition(sf::Vector2f(position.x, position.y));
 		shape->setScale(sf::Vector2f(scale.x, scale.y));
@@ -314,6 +324,8 @@ public:
 	ECS* GetComponent(int _val) {
 		return components[_val];
 	}
+	bool* canPlayable;
+	bool SetGuiRenderObj(GuiRenderObject* g_RendererObj) { GuiManager = g_RendererObj; return true; }
 protected:
 	sf::Sprite* shape;
 	std::string name;
@@ -322,7 +334,7 @@ protected:
 	sf::Texture o_Texture;
 	std::string textureDirectory;
 	std::string UUID;
-
+	GuiRenderObject* GuiManager;
 	bool CheckComponent(ECS* _ecs) {
 		for (auto b : components) {
 			if (b == _ecs) {
@@ -336,7 +348,6 @@ class RenderObjects {
 public:
 
 	bool SetWindow(sf::RenderWindow* v_RenderWindow) { e_RenderWindow = v_RenderWindow; return true; }
-
 	Mesh* Instantiate(Mesh* _mesh) {
 		for (auto& a : GetRenderObjects()) {
 			std::stringstream ss;
@@ -352,22 +363,20 @@ public:
 		_mesh->SetWindow(e_RenderWindow);
 		_mesh->time = windowTime;
 		_mesh->scene = this;
+		_mesh->canPlayable = canPlayable;
+		_mesh->SetGuiRenderObj(g_RendererObj);
 		e_RenderObjects.push_back(_mesh);
 		return _mesh;
 	}
 
-	std::vector<Mesh*> GetRenderObjects() {
-		return e_RenderObjects;
-	}
+	std::vector<Mesh*> &GetRenderObjects() {return e_RenderObjects;}
+	void Clear() {e_RenderObjects.clear();}
+	void ClearById(int _id) {e_RenderObjects.erase(e_RenderObjects.begin() + _id);}
 
-	void Clear() {
-		e_RenderObjects.clear();
-	}
 
-	void ClearById(int _id) {
-		e_RenderObjects.erase(e_RenderObjects.begin() + _id);
-	}
 	Time* windowTime;
+	bool* canPlayable;
+	GuiRenderObject* g_RendererObj;
 protected:
 	sf::RenderWindow* e_RenderWindow;
 	std::vector<Mesh*> e_RenderObjects;
@@ -379,6 +388,52 @@ public:
 	ECS* ecs;
 	std::string componentName;
 };
+
+
+class BoxCollider2D : public ECS {
+public:
+	void Update() {
+		for (int i = 0; i < SceneManager->GetRenderObjects().size(); i++) {
+			for (int b = i; b < SceneManager->GetRenderObjects().size(); b = b + 1) {
+				//You need to work again.
+				if (SceneManager->GetRenderObjects()[i] != SceneManager->GetRenderObjects()[b]) {
+					if (SceneManager->GetRenderObjects()[b]->position.x > SceneManager->GetRenderObjects()[i]->position.x + SceneManager->GetRenderObjects()[i]->scale.x
+						&& SceneManager->GetRenderObjects()[b]->position.x + SceneManager->GetRenderObjects()[b]->scale.x < SceneManager->GetRenderObjects()[i]->position.x) {
+						INFO("Collision detected really");
+					}
+				}
+			}
+		}
+	}
+};
+
+class Button : public ECS {
+public:
+	void Update() {
+		ImVec2 mousePos = ImGui::GetMousePos();
+		if (mousePos.x > this->position->x + this->scale->x && 
+			this->position->x + this->scale->x < mousePos.x &&
+			mousePos.y > this->position->y + this->scale->y && 
+			this->position->y + this->scale->y < mousePos.y
+			){
+
+			//Just testing bro.
+
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+				ButtonEvent();
+			}
+		}
+		else {
+		}
+	}
+
+	void ButtonEvent() {
+		This->LoadTexture("assets/15Turkey-03-articleLarge.png");
+	}
+private:
+
+};
+
 
 class Assembly {
 public:
@@ -393,10 +448,30 @@ public:
 			tempVector = ecs();
 			for (auto* b : tempVector) {
 				std::stringstream ss;
-				ss << typeid(*b).name();
+				std::string className = typeid(*b).name();
+				Utils::removeClass(&className);
+				ss << className;
 				ss << "[0x" << b << "]";
 				classes.push_back(new Script(b, ss.str()));
 			}
+
+
+			Button* b_Component = new Button();
+			std::stringstream ss;
+			std::string className = typeid(*b_Component).name();
+			Utils::removeClass(&className);
+			ss << className;
+			ss << "[0x" << b_Component << "]";
+			classes.push_back(new Script(b_Component,ss.str()));
+
+
+			BoxCollider2D* b_Component2 = new BoxCollider2D();
+			std::stringstream ss2;
+			std::string className2 = typeid(*b_Component2).name();
+			Utils::removeClass(&className2);
+			ss2 << className2;
+			ss2 << "[0x" << b_Component2 << "]";
+			classes.push_back(new Script(b_Component2, ss2.str()));
 		}
 	}
 
@@ -426,6 +501,9 @@ public:
 private:
 	SYSTEM_INFO sysInfo;
 };
+
+
+
 class Scene {
 public:
 	bool SaveScene() { 
@@ -459,6 +537,7 @@ public:
 
 	bool LoadScene(std::string path) {
 		std::ifstream stream(path);
+		lastPath = path;
 		std::stringstream buffer;
 		buffer << stream.rdbuf();
 		YAML::Node sceneData = YAML::Load(buffer.str());
@@ -500,6 +579,20 @@ public:
 				object->scale.y = ent.scaleY;
 				object->LoadTexture(ent.texturePath);
 
+				auto components = entity["Components"];
+
+				if (components) {
+					std::vector<Script*> scripts = assembly->getAssemblies();
+					for (auto component : components) {
+						for (auto script : scripts) {
+							if (component.as<std::string>() == typeid(*script->ecs).name()) {
+								object->AddComponent(script->ecs);
+							}
+						}
+					}
+				}
+
+
 			}
 
 		}
@@ -512,6 +605,11 @@ public:
 	RenderObjects* GetRenderObjects() {
 		return &s_RenderObjects;
 	}
+
+	void SetAssembly(Assembly* _assembly) {
+		assembly = _assembly;
+	}
+	std::string lastPath;
 protected:
 
 	bool SaveFile(std::string path) {
@@ -531,60 +629,44 @@ protected:
 			out << YAML::Key << "Position Y" << YAML::Value << b->position.y;
 			out << YAML::Key << "Scale X" << YAML::Value << b->scale.x;
 			out << YAML::Key << "Scale Y" << YAML::Value << b->scale.y;
+
+			out << YAML::Key << "Components" << YAML::BeginSeq;
+			for (auto a : *b->GetComponents()) {
+				out << YAML::Key << typeid(*a).name();
+			}
+			out << YAML::EndSeq;
 			out << YAML::EndMap;
 		}
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 		ss << out.c_str();
-
 		return true;
 	}
 	RenderObjects s_RenderObjects;
 	std::string sceneName = "Untitled";
-	std::string sceneGUID = "NUL";
+	std::string sceneGUID = "NULL";
+	Assembly* assembly;
 };
-class Window {
+
+class GuiRenderObject{
 public:
-	Window() {}
-	~Window() {}
-	bool Init(const char* title, uint_t width, uint_t height) { window = new sf::RenderWindow(sf::VideoMode(width, height), title); return Application(); }
-	bool Application(){
-		Log::GetLogger().Info("Engine trying to get ready.");
-		time.SetWindow(window);
-		ImGui::SFML::Init(*window);
-		scene.GetRenderObjects()->SetWindow(window);
-		Log::GetLogger().Info("Ready!");
-		scene.GetRenderObjects()->windowTime = &time;
-		std:async(std::launch::async, &Window::Start, this);
-		assembly.LoadModules();
-		while (window->isOpen()) {
-			do {
-				Window::Update();
-				Window::ApplicationUpdate();
-				window->clear();
-				window->pushGLStates();
-				Render();
-				if (playable)
-					ImGuiRenderer();
-				window->popGLStates();
-				if (playable)
-					ImGui::SFML::Render();
-				window->display();
-				Event();
-			} while (time.Update());
-		}
-		ImGui::SFML::Shutdown();
-		return false;
+	void AddGui(GuiRenderer* _renderer) {
+		g_Renderers.push_back(_renderer);
+		_renderer->Start(window);
 	}
+	void RemoveGui(int _t) {g_Renderers.erase(g_Renderers.begin() + _t);}
+	std::vector<GuiRenderer*>* getRenderers() { return &g_Renderers; }
+	void SetRenderWindow(sf::RenderWindow* _window) { window = _window; }
+private:
+	std::vector<GuiRenderer*> g_Renderers;
+	sf::RenderWindow* window;
+};
 
-
-	bool ImGuiRenderer() {
-
-		ImGui::SFML::Update(*window, deltaClock.restart());
-		SetupStyleImGui();
-
+class EditorWindow : GuiRenderer {
+public:
+	void Update() {
 		if (sceneBrowser.HasSelected()) {
-			scene.LoadScene(sceneBrowser.GetSelected().generic_string());
+			scene->LoadScene(sceneBrowser.GetSelected().generic_string());
 			std::stringstream ss;
 			ss << "Hydra Editor [" << sceneBrowser.GetSelected().generic_string() << "]";
 			window->setTitle(ss.str());
@@ -592,7 +674,7 @@ public:
 		}
 
 		if (saveSceneBrowser.HasSelected()) {
-			scene.SaveScene(saveSceneBrowser.GetSelected().generic_string());
+			scene->SaveScene(saveSceneBrowser.GetSelected().generic_string());
 			saveSceneBrowser.ClearSelected();
 		}
 		sceneBrowser.SetTypeFilters({ ".hscene" });
@@ -604,16 +686,16 @@ public:
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New")) {
-					scene.ResetScene();
+					scene->ResetScene();
 				}
 				if (ImGui::MenuItem("Save Scene")) {
 					saveSceneBrowser.Open();
 				}
 				if (ImGui::MenuItem("Load")) {
-					sceneBrowser.Open();			
+					sceneBrowser.Open();
 				}
 				if (ImGui::MenuItem("Play")) {
-					Play(false);
+					playable = true;
 				}
 
 				ImGui::EndMenu();
@@ -630,21 +712,29 @@ public:
 					Log::GetLogger().Clear();
 					Log::GetLogger().Info("Logs are cleared.");
 				}
-				if (ImGui::MenuItem("Reload assemblies")) {
-					assembly.ReloadAssemblies();
+				if (ImGui::MenuItem("Reload Scripts")) {
+					assembly->ReloadAssemblies();
+				}
+				if (ImGui::MenuItem("Reload Scene")) {
+					if (scene->lastPath != "") {
+						scene->LoadScene(scene->lastPath);
+					}
+					else {
+						Log::GetLogger().Error("Engine cannot load the path because the path is null.");
+					}
 				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
 		}
 
-	
+
 		ImGui::Begin("Hierarchy", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Scene");
 		if (ImGui::CollapsingHeader("GameObjects")) {
-			if (!scene.GetRenderObjects()->GetRenderObjects().empty()) {
-				for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects().size(); i++) {
-					if (ImGui::Selectable(scene.GetRenderObjects()->GetRenderObjects()[i]->GetObjectName().c_str())) {
+			if (!scene->GetRenderObjects()->GetRenderObjects().empty()) {
+				for (int i = 0; i < scene->GetRenderObjects()->GetRenderObjects().size(); i++) {
+					if (ImGui::Selectable(scene->GetRenderObjects()->GetRenderObjects()[i]->GetObjectName().c_str())) {
 						clickedData = i;
 					}
 				}
@@ -655,19 +745,19 @@ public:
 		}
 		ImGui::SetWindowPos({ 0, 20 });
 		ImGui::SetWindowPos({ 0, 20 });
-		ImGui::SetWindowSize({ 300,(float)window->getSize().y});
+		ImGui::SetWindowSize({ 300,(float)window->getSize().y });
 		ImGui::End();
 
 
 		if (isCreateOpen) {
-			ImGui::Begin("Create Object",(bool*)0,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+			ImGui::Begin("Create Object", (bool*)0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 			static char b[128];
-			ImGui::InputText("GameObject name",b,IM_ARRAYSIZE(b));
+			ImGui::InputText("GameObject name", b, IM_ARRAYSIZE(b));
 			if (ImGui::Button("Create")) {
 				std::stringstream ss;
 				ss << b;
 				if (ss.str() != "") {
-					scene.GetRenderObjects()->Instantiate(new Mesh(ss.str()));
+					scene->GetRenderObjects()->Instantiate(new Mesh(ss.str()));
 					isCreateOpen = false;
 				}
 				else {
@@ -689,27 +779,27 @@ public:
 
 		ImGui::Begin("engine_data", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 		std::stringstream ss;
-		ss << "FPS: " << GetFPS() << "\n" << "CPU Time : " << getCpuTime() << "ms" << "\n" << 
+		ss << "FPS: " << time->GetFps() << "\n" << "CPU Time : " << time->deltaTime() << "ms" << "\n" <<
 			"Memory: " << memex.ullTotalPhys / 1024 / 1024 << "MB"
 			<< "\nUsed Memory: " << ex.PrivateUsage / 1024 / 1024 << "MB"
 			<< "\nProcessors: " << sysInfo.GetCPUCount();
 		ImGui::SetWindowSize({ 230,200 });
 		ImGui::SetWindowPos({ 300,20 });
 		ImGui::Text(ss.str().c_str());
-		ImGui::PlotLines("FPS Graphic", time.fpsRates, 5);
+		ImGui::PlotLines("FPS Graphic", time->fpsRates, 5);
 		ImGui::End();
 
 
 		ImGui::Begin("Inspector", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-		if (scene.GetRenderObjects()->GetRenderObjects().empty() == false) {
+		if (scene->GetRenderObjects()->GetRenderObjects().empty() == false) {
 			if (ImGui::CollapsingHeader("Object Data")) {
-				float* x = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->position.x;
-				float* y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->position.y;
-				float* s_X = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->scale.x;
-				float* s_Y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->scale.y;
-				float* t_X = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.x;
-				float* t_Y = &scene.GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.y;
-				ImGui::Text(scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetObjectName().c_str());
+				float* x = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->position.x;
+				float* y = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->position.y;
+				float* s_X = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->scale.x;
+				float* s_Y = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->scale.y;
+				float* t_X = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.x;
+				float* t_Y = &scene->GetRenderObjects()->GetRenderObjects()[clickedData]->textureRect.y;
+				ImGui::Text(scene->GetRenderObjects()->GetRenderObjects()[clickedData]->GetObjectName().c_str());
 				if (ImGui::CollapsingHeader("Position")) {
 					ImGui::SliderFloat("Position X", x, 0.f, window->getSize().x);
 					ImGui::SliderFloat("Position Y", y, 0.f, window->getSize().y);
@@ -730,24 +820,25 @@ public:
 				if (ImGui::CollapsingHeader("Components"))
 				{
 
-					for (int i = 0; i < scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponents()->size(); i++) {
-						ECS* data = scene.GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponent(i);
-						if (ImGui::CollapsingHeader(typeid(*data).name())) {
+					for (int i = 0; i < scene->GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponents()->size(); i++) {
+						ECS* data = scene->GetRenderObjects()->GetRenderObjects()[clickedData]->GetComponent(i);
+						if (ImGui::TreeNode(typeid(*data).name())) {
 							std::stringstream ss;
-							ss << "Delete Class " << "["  << "0x" << data << "]";
+							ss << "Delete Class " << "[" << "0x" << data << "]";
 							if (ImGui::Button(ss.str().c_str())) {
-								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->DeleteComponent(i);
+								scene->GetRenderObjects()->GetRenderObjects()[clickedData]->DeleteComponent(i);
 							}
+							ImGui::TreePop();
 						}
-					} 
+					}
 				}
 				if (ImGui::CollapsingHeader("Add Component")) {
-					for (int i = 0; i < assembly.getAssemblies().size(); i++) {
+					for (int i = 0; i < assembly->getAssemblies().size(); i++) {
 						std::stringstream ss;
-						ss << assembly.getAssemblies()[i]->componentName.c_str();
+						ss << assembly->getAssemblies()[i]->componentName.c_str();
 						if (ImGui::Button(ss.str().c_str())) {
 							try {
-								scene.GetRenderObjects()->GetRenderObjects()[clickedData]->AddComponent(assembly.getAssemblies()[i]->ecs);
+								scene->GetRenderObjects()->GetRenderObjects()[clickedData]->AddComponent(assembly->getAssemblies()[i]->ecs);
 							}
 							catch (std::exception& b) {
 								std::cerr << "Exception: " << b.what() << "\n";
@@ -761,7 +852,7 @@ public:
 
 				if (ImGui::Button("Delete Object")) {
 					try {
-						scene.GetRenderObjects()->ClearById(clickedData);
+						scene->GetRenderObjects()->ClearById(clickedData);
 						clickedData = 0;
 						Log::GetLogger().Info("Successfully removed object.");
 					}
@@ -774,7 +865,7 @@ public:
 				textureFileBrowser.Display();
 
 				if (textureFileBrowser.HasSelected()) {
-					scene.GetRenderObjects()->GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
+					scene->GetRenderObjects()->GetRenderObjects()[clickedData]->LoadTexture(textureFileBrowser.GetSelected().generic_string());
 					textureFileBrowser.ClearSelected();
 				}
 			}
@@ -791,6 +882,76 @@ public:
 		ImGui::SetWindowSize({ 1326 , 164 });
 		ImGui::End();
 
+	}
+
+	bool settings;
+	bool playable = false;
+	bool isCreateOpen = false;
+	bool isSceneCreatorOpen = false; //TODO
+
+	ImGui::FileBrowser textureFileBrowser;
+	ImGui::FileBrowser sceneBrowser;
+	ImGui::FileBrowser saveSceneBrowser;
+	void SetEditorWindow(Assembly* a, Scene* s, Time* t, sf::RenderWindow* w) {
+		assembly = a;
+		scene = s;
+		time = t;
+		window = w;
+	}
+private:
+	Assembly* assembly;
+	Scene* scene;
+	Time* time;
+	sf::RenderWindow* window;
+	SystemInfo sysInfo;
+	int clickedData;
+};
+
+class Window {
+public:
+	Window() {}
+	~Window() {}
+	bool Init(const char* title, uint_t width, uint_t height) { window = new sf::RenderWindow(sf::VideoMode(width, height), title); return Application(); }
+	bool Application(){
+		g_RendererObj->SetRenderWindow(window);
+		Log::GetLogger().Info("Engine trying to get ready.");
+		time.SetWindow(window);
+		ImGui::SFML::Init(*window);
+		scene.GetRenderObjects()->SetWindow(window);
+		Log::GetLogger().Info("Ready!");
+		scene.GetRenderObjects()->windowTime = &time;
+		scene.GetRenderObjects()->g_RendererObj = g_RendererObj;
+		std:async(std::launch::async, &Window::Start, this);
+		assembly.LoadModules();
+		scene.SetAssembly(&assembly);
+		scene.GetRenderObjects()->canPlayable = &e_Window->playable;
+		e_Window->SetEditorWindow(&assembly, &scene, &time, window);
+		SetupStyleImGui();
+		while (window->isOpen()) {
+			do {
+				Window::Update();
+				Window::ApplicationUpdate();
+				window->clear();
+				window->pushGLStates();
+				Render();
+				ImGuiRenderer();
+				window->popGLStates();
+				ImGui::SFML::Render();
+				window->display();
+				Event();
+			} while (time.Update());
+		}
+		ImGui::SFML::Shutdown();
+		return false;
+	}
+
+
+	bool ImGuiRenderer() {
+		ImGui::SFML::Update(*window, deltaClock.restart());
+		if(!e_Window->playable)e_Window->Update();
+		for (auto b : *g_RendererObj->getRenderers()) {
+			b->Update();
+		}
 		return true;
 	}
 
@@ -820,12 +981,6 @@ public:
 		}
 		return true;
 	}
-
-
-	void ApplicationUpdate() {
-
-	}
-
 	bool Render() 
 	{
 		for (auto& b : scene.GetRenderObjects()->GetRenderObjects()) {
@@ -833,40 +988,16 @@ public:
 		}
 		return true;
 	}
-
 	virtual void Start() {};
 	virtual void Update() {};
-	
-	bool ApplicationStart() {
-		return true;
-	}
-
-	bool MainThread() {
-		Update();
-		return true;
-	}
-
-
-	void SetFPS(double fps = 60) {
-		time.SetFPS(fps);
-	}
-
-	int GetFPS() {
-		return time.GetFps();
-	}
-
-	float getCpuTime() {
-		return time.deltaTime();
-	}
-
-	bool Play(bool _p = true) {
-		playable = _p;
-		return true;
-	}
-
+	void ApplicationUpdate() {}
+	bool ApplicationStart() {return true;}
+	bool MainThread() {Update();return true;}
+	void SetFPS(double fps = 60) {time.SetFPS(fps);}
+	float getCpuTime() {return time.deltaTime();}
+	bool Play(bool _p = true) {e_Window->playable = _p;return true;}
 	void SetupStyleImGui() {
 		//Credit: https://github.com/Derydoca
-
 		ImGuiStyle* style = &ImGui::GetStyle();
 		ImVec4* colors = style->Colors;
 		colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
@@ -928,10 +1059,7 @@ public:
 		style->TabBorderSize = 1.0f;
 		style->TabRounding = 0.0f;
 		style->WindowRounding = 4.0f;
-
 	}
-
-
 protected:
 	sf::RenderWindow* window = NULL;
 	sf::Event event;
@@ -939,17 +1067,7 @@ protected:
 	Time time;
 	Assembly assembly;
 	sf::Clock deltaClock;
-	int clickedData = 0;	
-
-	bool settings;
-	bool playable = true;
-	bool isCreateOpen = false;
-	bool isSceneCreatorOpen = false; //TODO
-
-	ImGui::FileBrowser textureFileBrowser;
-	ImGui::FileBrowser sceneBrowser;
-	ImGui::FileBrowser saveSceneBrowser;
-
+	EditorWindow* e_Window = new EditorWindow();
+	GuiRenderObject* g_RendererObj = new GuiRenderObject();
 	SystemInfo sysInfo;
-	
 };
