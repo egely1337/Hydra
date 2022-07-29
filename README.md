@@ -1,6 +1,6 @@
 # Hydra
 
-Hydra is a 2D Game Engine written in C++ and under development for 8 months.
+Hydra is a 2D OpenGL Game Engine written in C++ and under development for 8 months.
   
 Features
   1. Editor UI
@@ -8,6 +8,13 @@ Features
   3. Save/Load Scene System
   4. Game Engine API
   5. GUI Support
+  
+# Libraries
+  1. OpenGL
+  2. SFML
+  3. ImGui
+  4. ImGui Window 
+  5. Box2D Physics
 
 
 # How to Install
