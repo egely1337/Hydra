@@ -19,7 +19,7 @@ Hydra is a 2D OpenGL Game Engine written in C++ and under development for over 8
 
 # How to Install
   
-  1. Just install latest release and extract it. Open Hydra.exe and it'll be started.
+  1. Just install latest [release](https://github.com/hyper1923/Hydra/releases/tag/alpha) and extract it. Open Hydra.exe and it'll be started.
 
 # Note
   You can't use the scripting feature, i didn't added yet to normal users.
