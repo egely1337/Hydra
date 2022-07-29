@@ -11,10 +11,10 @@ Hydra is a 2D OpenGL Game Engine written in C++ and under development for over 8
   
 # Libraries
   1. OpenGL
-  2. SFML
-  3. ImGui
-  4. ImGui Window 
-  5. Box2D Physics
+  2. [SFML](https://github.com/SFML/SFML)
+  3. [ImGui](https://github.com/SFML/SFML)
+  4. [ImGuiFileDialog](https://github.com/aiekick/ImGuiFileDialog) 
+  5. [Box2D Physics](https://github.com/erincatto/box2d)
 
 
 # How to Install
