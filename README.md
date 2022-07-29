@@ -2,7 +2,7 @@
 
 Hydra is a 2D OpenGL Game Engine written in C++ and under development for over 8 months.
   
-Features
+# Features
   1. Editor UI
   2. Scripting
   3. Save/Load Scene System
