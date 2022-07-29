@@ -12,7 +12,7 @@ Features
 
 # How to Install
   
-  1. Just install latest release and extract it. Open Hydra.exe and it'll be start.
+  1. Just install latest release and extract it. Open Hydra.exe and it'll be started.
 
 # Note
   You can't use the scripting feature, i didn't added yet to normal users.
