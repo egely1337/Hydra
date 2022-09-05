@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{a6ada9dc-e742-4065-83af-e1390f7aef32}</ProjectGuid>
+    <RootNamespace>Hydra</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>C:\Users\user\source\repos\Hydra\vendor\SFML-2.5.1;C:\Users\user\source\repos\Hydra\vendor\imgui;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\user\source\repos\Hydra\vendor\SFML-2.5.1\include;C:\Users\user\source\repos\Hydra\vendor\imgui;C:\Users\user\source\repos\Hydra\vendor\yaml-cpp\include;C:\Users\user\source\repos\Hydra\vendor\dc-win64-dynamic\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>C:\Users\user\source\repos\Hydra\vendor\SFML-2.5.1\include;C:\Users\user\source\repos\Hydra\vendor\imgui;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\user\source\repos\Hydra\vendor\dc-win64-dynamic\lib;C:\Users\user\source\repos\Hydra\vendor\SFML-2.5.1\lib;C:\Users\user\source\repos\Hydra\vendor\yaml-cpp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-window-d.lib;sfml-system-d.lib;sfml-graphics-d.lib;sfml-audio-d.lib;sfml-network-d.lib;opengl32.lib;freetype.lib;discord-rpc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\vendor\imgui\imgui-SFML.cpp" />
+    <ClCompile Include="..\vendor\imgui\imgui.cpp" />
+    <ClCompile Include="..\vendor\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\vendor\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\vendor\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\vendor\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\binary.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\contrib\graphbuilder.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\contrib\graphbuilderadapter.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\convert.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\depthguard.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\directives.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\emit.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitfromevents.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitter.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitterstate.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\emitterutils.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\exceptions.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\exp.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\memory.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\node.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\nodebuilder.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\nodeevents.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\node_data.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\null.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\ostream_wrapper.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\parse.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\parser.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\regex_yaml.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\scanner.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\scanscalar.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\scantag.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\scantoken.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\simplekey.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\singledocparser.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\stream.cpp" />
+    <ClCompile Include="..\vendor\yaml-cpp\src\tag.cpp" />
+    <ClCompile Include="Hydra.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\vendor\imgui\imconfig-SFML.h" />
+    <ClInclude Include="..\vendor\imgui\imconfig.h" />
+    <ClInclude Include="..\vendor\imgui\imfilebrowser.h" />
+    <ClInclude Include="..\vendor\imgui\imgui-SFML.h" />
+    <ClInclude Include="..\vendor\imgui\imgui-SFML_export.h" />
+    <ClInclude Include="..\vendor\imgui\imgui.h" />
+    <ClInclude Include="..\vendor\imgui\imgui_internal.h" />
+    <ClInclude Include="..\vendor\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\vendor\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\vendor\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\collectionstack.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\contrib\graphbuilderadapter.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\directives.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\emitterstate.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\emitterutils.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\exp.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\indentation.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\nodebuilder.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\nodeevents.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\ptr_vector.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\regeximpl.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\regex_yaml.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\scanner.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\scanscalar.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\scantag.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\setting.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\singledocparser.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\stream.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\streamcharsource.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\stringsource.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\tag.h" />
+    <ClInclude Include="..\vendor\yaml-cpp\src\token.h" />
+    <ClInclude Include="Hydra.hpp" />
+    <ClInclude Include="Include.h" />
+    <ClInclude Include="Player.hpp" />
+    <ClInclude Include="UUID.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
